@@ -46,10 +46,21 @@ local operators = {
     ["::"] = true,
 }
 
+function new_token(label, value, context)
+    return {
+        label = label,
+        value = value,
+        line = context.line,
+        col = context.col,
+    }
+end
+
 function new_result(code)
     local result = {
         code = code,
         index = 1,
+        line = 1,
+        col = 1,
         tokens = {},
     }
 
@@ -59,6 +70,12 @@ function new_result(code)
 
     function result:increment()
         self.index = self.index + 1
+        self.col = self.col + 1
+        
+        if self:char() == "\n" then
+            self.col = 1
+            self.line = self.line + 1
+        end
     end
 
     function result:is_index_valid()
@@ -70,7 +87,7 @@ function new_result(code)
         while self:is_index_valid() do
             if not self:char():match("[%d.]")
               or (self:char() == "." and num:match("[.]")) then
-                table.insert(self.tokens, num)
+                table.insert(self.tokens, new_token("number", num, self))
                 return
             end
 
