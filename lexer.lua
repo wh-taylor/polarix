@@ -55,8 +55,8 @@ function new_token(label, value, context)
     }
 end
 
-function new_result(code)
-    local result = {
+function new_context(code)
+    local context = {
         code = code,
         index = 1,
         line = 1,
@@ -64,11 +64,11 @@ function new_result(code)
         tokens = {},
     }
 
-    function result:char()
+    function context:char()
         return self.code:sub(self.index, self.index)
     end
 
-    function result:increment()
+    function context:increment()
         self.index = self.index + 1
         self.col = self.col + 1
         
@@ -78,11 +78,11 @@ function new_result(code)
         end
     end
 
-    function result:is_index_valid()
+    function context:is_index_valid()
         return self.index <= #self.code
     end
 
-    function result:lex_number()
+    function context:lex_number()
         local num = ""
         while self:is_index_valid() do
             if not self:char():match("[%d.]")
@@ -96,7 +96,7 @@ function new_result(code)
         end
     end
     
-    function result:lex_operator()
+    function context:lex_operator()
         local sym = ""
         while self:is_index_valid() do
             if not self:char():match("%p") then
@@ -116,7 +116,7 @@ function new_result(code)
         end
     end
 
-    function result:lex_word()
+    function context:lex_word()
         local word = ""
         while self:is_index_valid() do
             if self:char():match("[%p \n\t\r]") then
@@ -129,35 +129,35 @@ function new_result(code)
         end
     end
 
-    return result
+    return context
 end
 
 function lexer.lex(code)
-    local result = new_result(code)
+    local context = new_context(code)
     
-    while result:is_index_valid() do
-        local char = result:char()
+    while context:is_index_valid() do
+        local char = context:char()
         
         if char:match("%d") then
             -- Lex number
-            result:lex_number()
+            context:lex_number()
         elseif char:match("[ \n\t\r]") then
             -- Do nothing!
-            result:increment()
+            context:increment()
         elseif char:match("%p") then
             -- Lex punctuation
-            result:lex_operator()
+            context:lex_operator()
         else
             -- Lex word
-            result:lex_word()
+            context:lex_word()
         end
     end
 
-    for i = 1, #result.tokens do
-        print(i .. ": " .. result.tokens[i])
+    for i = 1, #context.tokens do
+        print(i .. ": " .. context.tokens[i])
     end
 
-    return result.tokens
+    return context.tokens
 end
 
 return lexer
