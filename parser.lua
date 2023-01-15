@@ -314,7 +314,7 @@ function new_parse_context(tokens)
 
         local returntype = "void"
 
-        if self:current_token():match("op", "->") then
+        if self:current_token():match("op", ":") then
             self:increment()
 
             returntype, err = self:search_type()
