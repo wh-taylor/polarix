@@ -80,7 +80,7 @@ function new_parse_context(tokens)
             local number = self:current_token().value
             self:increment()
 
-            if self:current_token().label == "word" then
+            if self:current_token().label == "unit" then
                 local unit = self:current_token().value
                 self:increment()
 

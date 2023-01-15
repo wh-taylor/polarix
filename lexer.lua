@@ -77,9 +77,15 @@ function new_context(file_name, code)
                 if num:sub(-1) == "." then
                     table.insert(self.tokens, new_token("num", num:sub(1,-2), ctx))
                     table.insert(self.tokens, new_token("op", ".", dot_ctx))
-                    return
+                else
+                    table.insert(self.tokens, new_token("num", num, ctx))
                 end
-                table.insert(self.tokens, new_token("num", num, ctx))
+                if not self:char():match("[%d%p \n\t\r]") then
+                    local ctx = self:copy()
+                    self:lex_word()
+                    local name = self.tokens[#self.tokens].value
+                    self.tokens[#self.tokens] = new_token("unit", name, ctx)
+                end
                 return
             end
 
