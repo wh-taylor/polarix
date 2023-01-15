@@ -122,6 +122,22 @@ function new_context(file_name, code)
             self:increment()
         end
     end
+
+    function context:lex_string()
+        local str = ""
+        local ctx = self:copy()
+        self:increment()
+        while self:is_index_valid() do
+            if self:char() == "\"" then
+                table.insert(self.tokens, new_token("str", str, ctx))
+                self:increment()
+                return
+            end
+
+            str = str .. self:char()
+            self:increment()
+        end
+    end
     
     function context:lex_operator()
         local sym = ""
@@ -196,6 +212,9 @@ function lexer.lex(file_name, code)
         elseif char:match("[ \n\t\r]") then
             -- Do nothing!
             context:increment()
+        elseif char == "\"" then
+            -- Lex string
+            context:lex_string()
         elseif char:match("%p") then
             -- Lex punctuation
             context:lex_operator()
