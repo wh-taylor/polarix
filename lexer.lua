@@ -47,14 +47,16 @@ local operators = {
 }
 
 function new_token(label, value, context)
-    return {
-        file_name = context.file_name,
-        code = context.code,
+    local token = {
         label = label,
         value = value,
+        file_name = context.file_name,
+        code = context.code,
         line = context.line,
         col = context.col,
     }
+
+    return token
 end
 
 function new_context(file_name, code)
@@ -90,7 +92,7 @@ function new_context(file_name, code)
         while self:is_index_valid() do
             if not self:char():match("[%d.]")
               or (self:char() == "." and num:match("[.]")) then
-                table.insert(self.tokens, new_token("number", num, self))
+                table.insert(self.tokens, new_token("num", num, self))
                 return
             end
 
@@ -112,7 +114,7 @@ function new_context(file_name, code)
 
         for i = #sym, 1, -1 do
             if operators[sym:sub(1, i)] then
-                table.insert(self.tokens, sym:sub(1, i))
+                table.insert(self.tokens, new_token("op", sym:sub(1, i), self))
                 self.index = self.index - #sym + i
                 return
             end
@@ -123,7 +125,7 @@ function new_context(file_name, code)
         local word = ""
         while self:is_index_valid() do
             if self:char():match("[%p \n\t\r]") then
-                table.insert(self.tokens, word)
+                table.insert(self.tokens, new_token("word", word, self))
                 return
             end
 
@@ -157,7 +159,7 @@ function lexer.lex(file_name, code)
     end
 
     for i = 1, #context.tokens do
-        print(i .. ": " .. context.tokens[i])
+        print(i .. " => [" .. context.tokens[i].label .. ": " .. context.tokens[i].value .. "]")
     end
 
     return context.tokens
