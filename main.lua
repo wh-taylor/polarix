@@ -12,7 +12,7 @@ function run(file_name)
     local code = read_file(file_name)
     if code == nil then return nil end
 
-    local tokens = lexer.lex(code)
+    local tokens = lexer.lex(file_name, code)
 end
 
 function main()

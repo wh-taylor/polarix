@@ -48,6 +48,8 @@ local operators = {
 
 function new_token(label, value, context)
     return {
+        file_name = context.file_name,
+        code = context.code,
         label = label,
         value = value,
         line = context.line,
@@ -55,8 +57,9 @@ function new_token(label, value, context)
     }
 end
 
-function new_context(code)
+function new_context(file_name, code)
     local context = {
+        file_name = file_name,
         code = code,
         index = 1,
         line = 1,
@@ -132,8 +135,8 @@ function new_context(code)
     return context
 end
 
-function lexer.lex(code)
-    local context = new_context(code)
+function lexer.lex(file_name, code)
+    local context = new_context(file_name, code)
     
     while context:is_index_valid() do
         local char = context:char()
