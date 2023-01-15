@@ -96,6 +96,15 @@ function new_parse_context(tokens)
                 value = number,
             }
         end
+
+        if self:current_token().label == "word" then -- variable or function or try
+            if self:current_token().value == "try" then
+                self:increment()
+                local expression, err = self:search_expression()
+                if err ~= nil then return nil, err end
+                return { name = "try", expression = expression }
+            end
+        end
     end
 
     function context:search_exp_operation()
@@ -119,7 +128,7 @@ function new_parse_context(tokens)
     end
 
     function context:search_mult_operation()
-        local left, err = context:search_atom()
+        local left, err = context:search_exp_operation()
         if err ~= nil then return nil, err end
 
         while self:current_token():match("op", "*")
@@ -127,7 +136,7 @@ function new_parse_context(tokens)
           or self:current_token():match("op", "%") do
             self:increment()
 
-            local right, err = context:search_atom()
+            local right, err = context:search_exp_operation()
             if err ~= nil then return nil, err end
 
             left = {
@@ -141,7 +150,7 @@ function new_parse_context(tokens)
     end
 
     function context:search_add_operation()
-        local left, err = context:search_atom()
+        local left, err = context:search_mult_operation()
         if err ~= nil then return nil, err end
 
         while self:current_token():match("op", "+")
