@@ -2,6 +2,13 @@ local inspect = require "inspect"
 
 local parser = {}
 
+function new_error(name, context)
+    return {
+        name = name,
+        context = context,
+    }
+end
+
 function new_parse_context(tokens)
     local context = {
         tokens = tokens,
@@ -22,14 +29,14 @@ function new_parse_context(tokens)
             inner_name = {},
         }
 
-        if self:current_token().label ~= "word" then return nil, 0 end
+        if self:current_token().label ~= "word" then return nil, new_error("expected type", self) end
         newtype.name = self:current_token().value
         self:increment()
 
         if self:current_token():match("op", "<") then
             self:increment()
             newtype.inner_name = self:search_type()
-            if not self:current_token():match("op", ">") then return nil, 0 end
+            if not self:current_token():match("op", ">") then return nil, new_error("expected '>'", self) end
             self:increment()
         end
 
@@ -63,7 +70,7 @@ function new_parse_context(tokens)
             self:increment()
             local expression = self:search_expression()
 
-            if not self:current_token():match("op", ")") then return nil, 0 end
+            if not self:current_token():match("op", ")") then return nil, new_error("expected ')'", self) end
             self:increment()
 
             return expression
@@ -81,13 +88,13 @@ function new_parse_context(tokens)
 
     function context:search_exp_operation()
         local left, err = context:search_atom()
-        if err ~= nil then return nil, 0 end
+        if err ~= nil then return nil, err end
 
         while self:current_token():match("op", "^") do
             self:increment()
 
             local right, err = context:search_atom()
-            if err ~= nil then return nil, 0 end
+            if err ~= nil then return nil, err end
 
             left = {
                 name = "exponent",
@@ -101,7 +108,7 @@ function new_parse_context(tokens)
 
     function context:search_mult_operation()
         local left, err = context:search_atom()
-        if err ~= nil then return nil, 0 end
+        if err ~= nil then return nil, err end
 
         while self:current_token():match("op", "*")
           or self:current_token():match("op", "/")
@@ -109,7 +116,7 @@ function new_parse_context(tokens)
             self:increment()
 
             local right, err = context:search_atom()
-            if err ~= nil then return nil, 0 end
+            if err ~= nil then return nil, err end
 
             left = {
                 name = "mult",
@@ -123,14 +130,14 @@ function new_parse_context(tokens)
 
     function context:search_add_operation()
         local left, err = context:search_atom()
-        if err ~= nil then return nil, 0 end
+        if err ~= nil then return nil, err end
 
         while self:current_token():match("op", "+")
           or self:current_token():match("op", "-") do
             self:increment()
 
             local right, err = context:search_mult_operation()
-            if err ~= nil then return nil, 0 end
+            if err ~= nil then return nil, err end
 
             left = {
                 name = "add",
@@ -150,7 +157,7 @@ function new_parse_context(tokens)
         self:increment()
 
         local expression, err = context:search_add_operation()
-        if err ~= nil then return nil, 0 end
+        if err ~= nil then return nil, err end
 
         return {
             name = "negative",
@@ -162,10 +169,10 @@ function new_parse_context(tokens)
         if self:current_token():match("word", "while") then
             self:increment()
             local condition, err = self:search_expression()
-            if err ~= nil then return nil, 0 end
+            if err ~= nil then return nil, err end
 
             local block, err = self:search_block()
-            if err ~= nil then return nil, 0 end
+            if err ~= nil then return nil, err end
 
             return {
                 name = "while",
@@ -186,7 +193,7 @@ function new_parse_context(tokens)
     end
 
     function context:search_block()
-        if not self:current_token():match("op", "{") then return nil, 0 end
+        if not self:current_token():match("op", "{") then return nil, new_error("expected '{'", self) end
         self:increment()
 
         local statements = {}
@@ -194,38 +201,34 @@ function new_parse_context(tokens)
         while not self:current_token():match("op", "}") do
             -- block
             local expression, err = self:search_expression()
-            if err ~= nil then return nil, 0 end
+            if err ~= nil then return nil, err end
 
             table.insert(statements, expression)
-            
         end
 
-        return {
-            name = "block",
-            statements = statements,
-        }
+        return statements
     end
 
     function context:search_function()
-        if not self:current_token():match("word", "func") then return nil, 0 end
+        if not self:current_token():match("word", "func") then return {} end
         self:increment()
         
         -- Get function name
-        if self:current_token().label ~= "word" then return nil, 0 end
+        if self:current_token().label ~= "word" then return nil, new_error("expected identifier", self) end
         local name = self:current_token().value
         self:increment()
 
-        if not self:current_token():match("op", "(") then return nil, 0 end
+        if not self:current_token():match("op", "(") then return nil, new_error("expected '('", self) end
         self:increment()
         
         -- Get parameters
         local parameters = {}
         while not self:current_token():match("op", ")") do
-            if self:current_token().label ~= "word" then return nil, 0 end
+            if self:current_token().label ~= "word" then return nil, new_error("expected identifier", self) end
             local name = self:current_token().value
             self:increment()
 
-            if not self:current_token():match("op", ":") then return nil, 0 end
+            if not self:current_token():match("op", ":") then return nil, new_error("expected ':'", self) end
             self:increment()
 
             local paramtype, err = self:search_type()
@@ -255,7 +258,9 @@ function new_parse_context(tokens)
         
         if self:current_token():match("op", "{") then
             -- Search block
-            block = self:search_block()
+            local err
+            block, err = self:search_block()
+            if err ~= nil then return nil, err end
         end
 
         return {
@@ -264,7 +269,7 @@ function new_parse_context(tokens)
             parameters = parameters,
             returntype = returntype,
             block = block,
-        }, nil
+        }
     end
 
     return context

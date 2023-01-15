@@ -16,7 +16,7 @@ function run(file_name)
     local tokens = lexer.lex(file_name, code)
 
     local tree, err = parser.parse(tokens)
-    if err ~= nil then error("Whoops!") end
+    if err ~= nil then print("polarix: " .. err.context.tokens[err.context.index].file_name .. ":" .. err.context.tokens[err.context.index].line .. ":" .. err.context.tokens[err.context.index].col .. ": " .. err.name .. ", found '" .. err.context.tokens[err.context.index].value .. "'") end
 end
 
 function main()
