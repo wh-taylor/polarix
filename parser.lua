@@ -5,9 +5,21 @@ local ctx = {
     index = nil,
 }
 
--- expr ::= atom
+-- expr ::= dot
 function ctx:parse_expr()
-    return self:parse_call_index()
+    return self:parse_dot()
+end
+
+-- dot ::= (call_index | dot) '.' call_index
+function ctx:parse_dot()
+    local source = self:parse_call_index()
+
+    while self:match("op", ".") do
+        self:next()
+        local postdot = self:parse_call_index()
+        source = { a = "dot", source = source, postdot = postdot }
+    end
+    return source
 end
 
 -- call_index ::= (atom | call_index) ('[' expr ']' | '(' (expr (',' expr)*)? ')')*
