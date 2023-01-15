@@ -152,14 +152,30 @@ function new_parse_context(tokens)
         return left
     end
 
+    function context:search_negative_operation()
+        if not self:current_token():match("op", "-") then
+            return context:search_dot_operation()
+        end
+
+        self:increment()
+
+        local expression, err = context:search_dot_operation()
+        if err ~= nil then return nil, err end
+
+        return {
+            name = "negative",
+            left = expression,
+        }
+    end
+
     function context:search_exp_operation()
-        local left, err = context:search_dot_operation()
+        local left, err = context:search_negative_operation()
         if err ~= nil then return nil, err end
 
         while self:current_token():match("op", "^") do
             self:increment()
 
-            local right, err = context:search_dot_operation()
+            local right, err = context:search_negative_operation()
             if err ~= nil then return nil, err end
 
             left = {
@@ -215,22 +231,6 @@ function new_parse_context(tokens)
         return left
     end
 
-    function context:search_negative_operation()
-        if not self:current_token():match("op", "-") then
-            return context:search_add_operation()
-        end
-
-        self:increment()
-
-        local expression, err = context:search_add_operation()
-        if err ~= nil then return nil, err end
-
-        return {
-            name = "negative",
-            left = expression,
-        }
-    end
-
     function context:search_expression()
         if self:current_token():match("word", "while") then
             self:increment()
@@ -254,7 +254,7 @@ function new_parse_context(tokens)
         elseif self:current_token():match("word", "match") then
             self:increment()
         else
-            return self:search_negative_operation()
+            return self:search_add_operation()
         end
     end
 
