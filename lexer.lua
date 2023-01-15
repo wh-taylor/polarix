@@ -1,10 +1,18 @@
 local lexer = {}
 
+function string.char_at(str, index)
+    return str:sub(index, index)
+end
+
 function lexer.lex(code)
-    local index = 1
+    local result = {
+        code = code,
+        index = 1,
+        tokens = {},
+    }
     
-    while index <= #code do
-        local char = code:sub(index, index)
+    while result.index <= #code do
+        local char = code:char_at(result.index)
         
         if char:match("%d") then
             print(char .. ": DIGIT")
@@ -16,7 +24,7 @@ function lexer.lex(code)
             print(char .. ": LETTER")
         end
 
-        index = index + 1
+        result.index = result.index + 1
     end
 end
 
