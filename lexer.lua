@@ -24,6 +24,7 @@ function new_result(code)
         while self:is_index_valid() do
             if self:char():match("[%p \n\t\r]") then
                 table.insert(self.tokens, word)
+                return
             end
 
             word = word .. self:char()
@@ -42,17 +43,24 @@ function lexer.lex(code)
         
         if char:match("%d") then
             -- Lex number
+            result:increment()
         elseif char:match("[ \n\t\r]") then
             -- Do nothing!
+            result:increment()
         elseif char:match("%p") then
             -- Lex punctuation
+            result:increment()
         else
             -- Lex word
             result:lex_word()
         end
-
-        result:increment()
     end
+
+    for i = 1, #result.tokens do
+        print(i .. ": " .. result.tokens[i])
+    end
+
+    return result.tokens
 end
 
 return lexer
