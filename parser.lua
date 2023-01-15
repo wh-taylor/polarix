@@ -129,6 +129,18 @@ function new_parse_context(tokens)
             return { name = "identifier", id = name }
         end
 
+        if self:current_token().label == "str" then
+            local str = self:current_token().value
+            self:increment()
+
+            while self:current_token().label == "str" do
+                str = str .. self:current_token().value
+                self:increment()
+            end
+
+            return { name = "string", value = str }
+        end
+
         return nil, new_error("expected atom", self)
     end
 
