@@ -74,13 +74,13 @@ function new_context(file_name, code)
     end
 
     function context:increment()
-        self.index = self.index + 1
-        self.col = self.col + 1
-        
         if self:char() == "\n" then
-            self.col = 1
+            self.col = 0
             self.line = self.line + 1
         end
+
+        self.index = self.index + 1
+        self.col = self.col + 1
     end
 
     function context:is_index_valid()
@@ -159,7 +159,7 @@ function lexer.lex(file_name, code)
     end
 
     for i = 1, #context.tokens do
-        print(i .. " => [" .. context.tokens[i].label .. ": " .. context.tokens[i].value .. "]")
+        print(i .. " => [" .. context.tokens[i].label .. ": " .. context.tokens[i].value .. "] col = " .. context.tokens[i].col)
     end
 
     return context.tokens
