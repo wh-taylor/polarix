@@ -279,6 +279,7 @@ function new_parse_context(tokens)
             end
         end
 
+        self:increment()
         return statements
     end
 
@@ -327,6 +328,13 @@ function new_parse_context(tokens)
             self:increment()
 
             -- Search expression
+            local expression, err = self:search_expression()
+            if err ~= nil then return nil, err end
+            
+            block = { { name = "expression", value = expression } }
+            
+            if not self:current_token():match("op", ";") then return nil, new_error("expected ';'", self) end
+            self:increment()
         end
         
         if self:current_token():match("op", "{") then
@@ -352,12 +360,11 @@ function parser.parse(tokens)
     local context = new_parse_context(tokens)
     local tree = {}
 
-    while context:current_token() ~= nil do
+    while context:current_token() ~= nil and not context:current_token():match("eof", "eof") do
         local func, err = context:search_function()
         if err ~= nil then return nil, err end
 
         table.insert(tree, func)
-        context:increment()
     end
 
     print(inspect(tree))
