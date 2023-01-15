@@ -19,6 +19,19 @@ function new_result(code)
         return self.index <= #self.code
     end
 
+    function result:lex_number()
+        local num = ""
+        while self:is_index_valid() do
+            if not self:char():match("[%d.]") then
+                table.insert(self.tokens, num)
+                return
+            end
+
+            num = num .. self:char()
+            self:increment()
+        end
+    end
+
     function result:lex_word()
         local word = ""
         while self:is_index_valid() do
@@ -43,7 +56,7 @@ function lexer.lex(code)
         
         if char:match("%d") then
             -- Lex number
-            result:increment()
+            result:lex_number()
         elseif char:match("[ \n\t\r]") then
             -- Do nothing!
             result:increment()
