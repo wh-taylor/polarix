@@ -55,12 +55,11 @@ function new_parse_context(tokens)
             self:increment()
         end
 
-        return newtype
+        return newtype, nil
     end
 
     function context:search_function()
         if self:current_token():match("word", "func") then
-            print("hi")
             self:increment()
             
             -- Get function name
@@ -87,11 +86,35 @@ function new_parse_context(tokens)
                 table.insert(parameters, {name = name, paramtype = paramtype})
             end
 
+            self:increment()
+
+            local returntype = "void"
+
+            if self:current_token():match("op", "->") then
+                self:increment()
+
+                returntype, err = self:search_type()
+                if err ~= nil then return nil, err end
+            end
+
+            if self:current_token():match("op", "=") then
+                self:increment()
+
+                -- Search expression
+            end
+            
+            if self:current_token():match("op", "{") then
+                self:increment()
+                
+                -- Search block
+            end
+
             return {
                 label = "function",
                 name = name,
                 parameters = parameters,
-            }
+                returntype = returntype,
+            }, nil
         end
     end
 
@@ -103,7 +126,10 @@ function parser.parse(tokens)
     local tree = {}
 
     --while context:current_token() ~= nil do
-        table.insert(tree, context:search_function())
+        local func, err = context:search_function()
+        if err ~= nil then return nil, err end
+
+        table.insert(tree, func)
         context:increment()
     --end
 

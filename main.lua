@@ -15,7 +15,8 @@ function run(file_name)
 
     local tokens = lexer.lex(file_name, code)
 
-    local tree = parser.parse(tokens)
+    local tree, err = parser.parse(tokens)
+    if err ~= nil then error("Whoops!") end
 end
 
 function main()
