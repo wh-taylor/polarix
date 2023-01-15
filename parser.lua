@@ -137,8 +137,8 @@ function new_parse_context(tokens)
         while self:current_token():match("op", ".") do
             self:increment()
 
-            local right = self:current_token().value
-            self:increment()
+            local right, err = self:search_atom()
+            if err ~= nil then return nil, err end
 
             left = {
                 name = "dot",
