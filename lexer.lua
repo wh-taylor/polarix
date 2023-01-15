@@ -52,6 +52,7 @@ function new_token(label, value, context)
         value = value,
         file_name = context.file_name,
         code = context.code,
+        index = context.index,
         line = context.line,
         col = context.col,
     }
