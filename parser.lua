@@ -58,64 +58,213 @@ function new_parse_context(tokens)
         return newtype, nil
     end
 
-    function context:search_function()
-        if self:current_token():match("word", "func") then
+    function context:search_atom()
+        if self:current_token():match("op", "(") then
             self:increment()
+            local expression = self:search_expression()
+
+            if not self:current_token():match("op", ")") then return nil, 0 end
+            self:increment()
+
+            return expression
+        end
+
+        if self:current_token().label == "num" then
+            local number = self:current_token().value
+            self:increment()
+            return {
+                name = "number",
+                value = number,
+            }
+        end
+    end
+
+    function context:search_exp_operation()
+        local left, err = context:search_atom()
+        if err ~= nil then return nil, 0 end
+
+        while self:current_token():match("op", "^") do
+            self:increment()
+
+            local right, err = context:search_atom()
+            if err ~= nil then return nil, 0 end
+
+            left = {
+                name = "exponent",
+                left = left,
+                right = right,
+            }
+        end
+
+        return left
+    end
+
+    function context:search_mult_operation()
+        local left, err = context:search_atom()
+        if err ~= nil then return nil, 0 end
+
+        while self:current_token():match("op", "*")
+          or self:current_token():match("op", "/")
+          or self:current_token():match("op", "%") do
+            self:increment()
+
+            local right, err = context:search_atom()
+            if err ~= nil then return nil, 0 end
+
+            left = {
+                name = "mult",
+                left = left,
+                right = right,
+            }
+        end
+
+        return left
+    end
+
+    function context:search_add_operation()
+        local left, err = context:search_atom()
+        if err ~= nil then return nil, 0 end
+
+        while self:current_token():match("op", "+")
+          or self:current_token():match("op", "-") do
+            self:increment()
+
+            local right, err = context:search_mult_operation()
+            if err ~= nil then return nil, 0 end
+
+            left = {
+                name = "add",
+                left = left,
+                right = right,
+            }
+        end
+
+        return left
+    end
+
+    function context:search_negative_operation()
+        if not self:current_token():match("op", "-") then
+            return context:search_add_operation()
+        end
+
+        self:increment()
+
+        local expression, err = context:search_add_operation()
+        if err ~= nil then return nil, 0 end
+
+        return {
+            name = "negative",
+            left = expression,
+        }
+    end
+
+    function context:search_expression()
+        if self:current_token():match("word", "while") then
+            self:increment()
+            local condition, err = self:search_expression()
+            if err ~= nil then return nil, 0 end
+
+            local block, err = self:search_block()
+            if err ~= nil then return nil, 0 end
+
+            return {
+                name = "while",
+                condition = condition,
+                block = block,
+            }
+        elseif self:current_token():match("word", "if") then
+            self:increment()
+        elseif self:current_token():match("word", "for") then
+            self:increment()
+        elseif self:current_token():match("word", "loop") then
+            self:increment()
+        elseif self:current_token():match("word", "match") then
+            self:increment()
+        else
+            return self:search_negative_operation()
+        end
+    end
+
+    function context:search_block()
+        if not self:current_token():match("op", "{") then return nil, 0 end
+        self:increment()
+
+        local statements = {}
+
+        while not self:current_token():match("op", "}") do
+            -- block
+            local expression, err = self:search_expression()
+            if err ~= nil then return nil, 0 end
+
+            table.insert(statements, expression)
             
-            -- Get function name
+        end
+
+        return {
+            name = "block",
+            statements = statements,
+        }
+    end
+
+    function context:search_function()
+        if not self:current_token():match("word", "func") then return nil, 0 end
+        self:increment()
+        
+        -- Get function name
+        if self:current_token().label ~= "word" then return nil, 0 end
+        local name = self:current_token().value
+        self:increment()
+
+        if not self:current_token():match("op", "(") then return nil, 0 end
+        self:increment()
+        
+        -- Get parameters
+        local parameters = {}
+        while not self:current_token():match("op", ")") do
             if self:current_token().label ~= "word" then return nil, 0 end
             local name = self:current_token().value
             self:increment()
 
-            if not self:current_token():match("op", "(") then return nil, 0 end
-            self:increment()
-            
-            -- Get parameters
-            local parameters = {}
-            while not self:current_token():match("op", ")") do
-                if self:current_token().label ~= "word" then return nil, 0 end
-                local name = self:current_token().value
-                self:increment()
-
-                if not self:current_token():match("op", ":") then return nil, 0 end
-                self:increment()
-
-                local paramtype, err = self:search_type()
-                if err ~= nil then return nil, err end
-
-                table.insert(parameters, {name = name, paramtype = paramtype})
-            end
-
+            if not self:current_token():match("op", ":") then return nil, 0 end
             self:increment()
 
-            local returntype = "void"
+            local paramtype, err = self:search_type()
+            if err ~= nil then return nil, err end
 
-            if self:current_token():match("op", "->") then
-                self:increment()
-
-                returntype, err = self:search_type()
-                if err ~= nil then return nil, err end
-            end
-
-            if self:current_token():match("op", "=") then
-                self:increment()
-
-                -- Search expression
-            end
-            
-            if self:current_token():match("op", "{") then
-                self:increment()
-                
-                -- Search block
-            end
-
-            return {
-                label = "function",
-                name = name,
-                parameters = parameters,
-                returntype = returntype,
-            }, nil
+            table.insert(parameters, {name = name, paramtype = paramtype})
         end
+
+        self:increment()
+
+        local returntype = "void"
+
+        if self:current_token():match("op", "->") then
+            self:increment()
+
+            returntype, err = self:search_type()
+            if err ~= nil then return nil, err end
+        end
+
+        local block = {}
+
+        if self:current_token():match("op", "=") then
+            self:increment()
+
+            -- Search expression
+        end
+        
+        if self:current_token():match("op", "{") then
+            -- Search block
+            block = self:search_block()
+        end
+
+        return {
+            label = "function",
+            name = name,
+            parameters = parameters,
+            returntype = returntype,
+            block = block,
+        }, nil
     end
 
     return context
@@ -125,13 +274,13 @@ function parser.parse(tokens)
     local context = new_parse_context(tokens)
     local tree = {}
 
-    --while context:current_token() ~= nil do
+    while context:current_token() ~= nil do
         local func, err = context:search_function()
         if err ~= nil then return nil, err end
 
         table.insert(tree, func)
         context:increment()
-    --end
+    end
 
     print(inspect(tree))
 end
