@@ -97,13 +97,36 @@ function new_parse_context(tokens)
             }
         end
 
-        if self:current_token().label == "word" then -- variable or function or try
+        if self:current_token().label == "word" then -- identifier or function or try
             if self:current_token().value == "try" then
                 self:increment()
                 local expression, err = self:search_expression()
                 if err ~= nil then return nil, err end
                 return { name = "try", expression = expression }
             end
+
+            local name = self:current_token().value
+            self:increment()
+
+            if self:current_token():match("op", "(") then
+                self:increment()
+                local arguments = {}
+                while not self:current_token():match("op", ")") do
+                    local expression, err = self:search_expression()
+                    if err ~= nil then return nil, err end
+                    if not self:current_token():match("op", ",") and not self:current_token():match("op", ")") then
+                        return nil, new_error("expected ',' or ')'", self)
+                    end
+                    if self:current_token():match("op", ",") then
+                        self:increment()
+                    end
+                    table.insert(arguments, expression)
+                end
+                self:increment()
+                return { name = "functioncall", id = name, arguments = arguments }
+            end
+
+            return { name = "identifier", id = name }
         end
     end
 
