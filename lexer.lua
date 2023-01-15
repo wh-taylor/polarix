@@ -237,6 +237,8 @@ function lexer.lex(file_name, code)
         end
     end
 
+    table.insert(context.tokens, new_token("eof", "eof", context))
+
     for i = 1, #context.tokens do
         print(i .. " => [" .. context.tokens[i].label .. ": " .. context.tokens[i].value .. "] col = " .. context.tokens[i].col)
     end
