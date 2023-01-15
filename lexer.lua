@@ -7,7 +7,10 @@ function lexer.lex(code)
         tokens = {},
         char = function(self)
             return self.code:sub(self.index, self.index)
-        end
+        end,
+        increment = function(self)
+            self.index = self.index + 1
+        end,
     }
     
     while result.index <= #code do
@@ -23,7 +26,7 @@ function lexer.lex(code)
             print(char .. ": LETTER")
         end
 
-        result.index = result.index + 1
+        result:increment()
     end
 end
 
