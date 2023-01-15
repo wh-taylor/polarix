@@ -215,7 +215,14 @@ function new_parse_context(tokens)
             local expression, err = self:search_expression()
             if err ~= nil then return nil, err end
 
-            table.insert(statements, expression)
+            if self:current_token():match("op", "}") then
+                table.insert(statements, { name = "expression", value = expression })
+            elseif self:current_token():match("op", ";") then
+                table.insert(statements, expression)
+                self:increment()
+            else
+                return nil, new_error("expected ';' or '}'", self)
+            end
         end
 
         return statements
