@@ -1,5 +1,51 @@
 local lexer = {}
 
+local operators = {
+    ["("] = true,
+    [")"] = true,
+    ["{"] = true,
+    ["}"] = true,
+    ["["] = true,
+    ["]"] = true,
+    ["\""] = true,
+    ["'"] = true,
+    ["."] = true,
+    [","] = true,
+    ["/"] = true,
+    ["\\"] = true,
+    ["+"] = true,
+    ["-"] = true,
+    ["="] = true,
+    ["!"] = true,
+    ["@"] = true,
+    ["#"] = true,
+    ["$"] = true,
+    ["%"] = true,
+    ["^"] = true,
+    ["&"] = true,
+    ["*"] = true,
+    ["`"] = true,
+    ["~"] = true,
+    ["?"] = true,
+    ["<"] = true,
+    [">"] = true,
+    [":"] = true,
+    [";"] = true,
+    ["|"] = true,
+    ["->"] = true,
+    ["=>"] = true,
+    [">="] = true,
+    ["<="] = true,
+    ["=="] = true,
+    ["+="] = true,
+    ["-="] = true,
+    ["*="] = true,
+    ["/="] = true,
+    ["^="] = true,
+    ["%="] = true,
+    ["::"] = true,
+}
+
 function new_result(code)
     local result = {
         code = code,
@@ -30,6 +76,26 @@ function new_result(code)
 
             num = num .. self:char()
             self:increment()
+        end
+    end
+    
+    function result:lex_operator()
+        local sym = ""
+        while self:is_index_valid() do
+            if not self:char():match("%p") then
+                break
+            end
+
+            sym = sym .. self:char()
+            self:increment()
+        end
+
+        for i = #sym, 1, -1 do
+            if operators[sym:sub(1, i)] then
+                table.insert(self.tokens, sym:sub(1, i))
+                self.index = self.index - #sym + i
+                return
+            end
         end
     end
 
@@ -63,7 +129,7 @@ function lexer.lex(code)
             result:increment()
         elseif char:match("%p") then
             -- Lex punctuation
-            result:increment()
+            result:lex_operator()
         else
             -- Lex word
             result:lex_word()
