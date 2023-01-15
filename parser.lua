@@ -5,15 +5,25 @@ local ctx = {
     index = nil,
 }
 
--- expr ::= dot
+-- expr ::= scoper
 function ctx:parse_expr()
-    return self:parse_dot()
+    return self:parse_scoper()
+end
+
+-- scoper ::= (id | scoper) '::' dot
+function ctx:parse_scoper()
+    local scope = self:parse_identifier()
+    while self:match("op", "::") do
+        self:next()
+        local member = self:parse_dot()
+        scope = { a = "scoper", scope = scope, member = member }
+    end
+    return scope
 end
 
 -- dot ::= (call_index | dot) '.' call_index
 function ctx:parse_dot()
     local source = self:parse_call_index()
-
     while self:match("op", ".") do
         self:next()
         local postdot = self:parse_call_index()

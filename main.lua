@@ -1,6 +1,8 @@
 local lexer = require "lexer"
 local parser = require "parser"
 
+local inspect = require "inspect"
+
 function read_file(file)
     local f = io.open(file, "rb")
     if f == nil then return nil end
@@ -16,7 +18,8 @@ function run(file_name)
     local tokens = lexer.lex(file_name, code)
 
     local tree, err = parser.parse(tokens)
-    if err ~= nil then print("polarix: " .. err.context.tokens[err.context.index].file_name .. ":" .. err.context.tokens[err.context.index].line .. ":" .. err.context.tokens[err.context.index].col .. ": " .. err.name .. ", found '" .. err.context.tokens[err.context.index].value .. "'") end
+    if err ~= nil then print("polarix: " .. err.ctx.tokens[err.ctx.index].file_name .. ":" .. err.ctx.tokens[err.ctx.index].line .. ":" .. err.ctx.tokens[err.ctx.index].col .. ": " .. err.err .. ", found '" .. err.ctx.tokens[err.ctx.index].value .. "'") end
+    print(inspect(tree))
 end
 
 function main()

@@ -1,0 +1,79 @@
+file ::= (import | mod | class | instance | def_type | enum | struct | function)*
+
+import ::= 'import' IDENTIFIER ';'
+
+mod ::= 'mod' '{' (class | instance | def_type | enum | struct | function)* '}'
+
+class ::= 'class' IDENTIFIER '{' (class_field (',' class_field)*)? '}'
+
+class_field ::= func_header ';' | def_type
+
+def_type ::= 'type' IDENTIFIER '=' type ';'
+
+enum ::= 'enum' type_def '{' (enum_field (',' enum_field)*)? '}'
+
+enum_field ::= IDENTIFIER ('(' type (',' type)* ')')?
+
+struct ::= 'struct' type_def ('{' (struct_field (',' struct_field)*)? '}' | ';')
+
+struct_field ::= IDENTIFIER ':' type
+
+function ::= func_header block | '=' expr ';'
+
+func_header ::= 'func' IDENTIFIER '(' (IDENTIFIER ':' type)* ')' (':' type)?
+
+type_def ::= IDENTIFIER ('<' IDENTIFIER (',' IDENTIFIER)* '>')?
+
+type ::= IDENTIFIER ('<' type '>')? ('?' | '!' | '*')*
+
+block ::= '{' (statement ';')* expr? '}'
+
+statement ::= expr | 'return' expr? | 'break' expr? | 'assert' expr (',' expr) | 'continue' | ('let' | 'const')? decon ('=' expr) | def_type | id ('+=' | '-=' | '*=' | '/=' | '%=' | '^=') expr | decon '=>' expr
+
+decon ::= IDENTIFIER | '(' IDENTIFIER (',' IDENTIFIER)* ')'
+
+expr ::= closure | try | while_statement | for_statement | loop_statement | if_statement | match_statement
+
+while_statement ::= 'while' expr block
+
+for_statement ::= 'for' decon 'in' expr block
+
+loop_statement ::= 'loop' block
+
+if_statement ::= 'if' expr block ('elif' expr block)* ('else' block)?
+
+match_statement ::= 'match' '{' (match_branch (',' match_branch)*)? '}'
+
+match_branch ::= decon '=>' expr
+
+closure :: '|' (IDENTIFIER ':' type)* '|' expr
+
+try :: 'try' expr ('catch' expr)?
+
+expr ::= or_expr
+
+or_expr ::= and_expr ('or' and_expr)*
+
+and_expr ::= not_expr ('and' not_expr)*
+
+not_expr ::= 'not'? cmp_expr
+
+cmp_expr ::= add_expr (('==' | '!=' | '>' | '<' | '>=' | '<=') add_expr)*
+
+add_expr ::= mult_expr (('+' | '-') mult_expr)*
+
+mult_expr ::= exp_expr (('*' | '/' | '%') exp_expr)*
+
+exp_expr ::= neg_expr ('^' neg_expr)*
+
+neg_expr ::= '-'* call
+
+scoper ::= (id | scoper) '::' dot
+
+dot ::= (call_index | dot) '.' call_index
+
+call_index ::= (atom | call_index) ('[' expr ']' | '(' (expr (',' expr)*)? ')')*
+
+atom ::= array | parentheses | unit_number | IDENTIFIER | NUMBER | STRING | CHAR
+
+array ::= '[' (expr (',' expr)*)? ']'
