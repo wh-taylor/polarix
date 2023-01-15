@@ -130,14 +130,34 @@ function new_parse_context(tokens)
         end
     end
 
-    function context:search_exp_operation()
+    function context:search_dot_operation()
         local left, err = context:search_atom()
+        if err ~= nil then return nil, err end
+
+        while self:current_token():match("op", ".") do
+            self:increment()
+
+            local right = self:current_token().value
+            self:increment()
+
+            left = {
+                name = "dot",
+                left = left,
+                right = right,
+            }
+        end
+
+        return left
+    end
+
+    function context:search_exp_operation()
+        local left, err = context:search_dot_operation()
         if err ~= nil then return nil, err end
 
         while self:current_token():match("op", "^") do
             self:increment()
 
-            local right, err = context:search_atom()
+            local right, err = context:search_dot_operation()
             if err ~= nil then return nil, err end
 
             left = {
