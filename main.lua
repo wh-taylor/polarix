@@ -1,3 +1,5 @@
+local lexer = require "lexer"
+
 function read_file(file)
     local f = io.open(file, "rb")
     if f == nil then return nil end
@@ -6,8 +8,20 @@ function read_file(file)
     return content
 end
 
+function run(file_name)
+    local code = read_file(file_name)
+    if code == nil then return nil end
+
+    local tokens = lexer.lex(code)
+end
+
 function main()
-    print(read_file(arg[1]))
+    if arg[1] == nil then
+        print("File name must be provided")
+        return
+    end
+
+    run(arg[1])
 end
 
 main()
