@@ -1,50 +1,14 @@
 local lexer = {}
 
-local operators = {
-    ["("] = true,
-    [")"] = true,
-    ["{"] = true,
-    ["}"] = true,
-    ["["] = true,
-    ["]"] = true,
-    ["\""] = true,
-    ["'"] = true,
-    ["."] = true,
-    [","] = true,
-    ["/"] = true,
-    ["\\"] = true,
-    ["+"] = true,
-    ["-"] = true,
-    ["="] = true,
-    ["!"] = true,
-    ["@"] = true,
-    ["#"] = true,
-    ["$"] = true,
-    ["%"] = true,
-    ["^"] = true,
-    ["&"] = true,
-    ["*"] = true,
-    ["`"] = true,
-    ["~"] = true,
-    ["?"] = true,
-    ["<"] = true,
-    [">"] = true,
-    [":"] = true,
-    [";"] = true,
-    ["|"] = true,
-    ["->"] = true,
-    ["=>"] = true,
-    [">="] = true,
-    ["<="] = true,
-    ["=="] = true,
-    ["+="] = true,
-    ["-="] = true,
-    ["*="] = true,
-    ["/="] = true,
-    ["^="] = true,
-    ["%="] = true,
-    ["::"] = true,
-}
+local ops = { "(", ")", "{", "}", "[", "]", ".", ",", "/", "\\", "+", "-",
+    "=", "!", "@", "#", "$", "%", "^", "&", "*", "`", "~", "?", "<", ">", ":",
+    ";", "|", "->", "=>", ">=", "<=", "==", "+=", "-=", "*=", "/=", "%=", "::" }
+
+local operators = {}
+
+for i = 1, #ops do
+    operators[ops[i]] = true
+end
 
 function new_token(label, value, context)
     local token = {
