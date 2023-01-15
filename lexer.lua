@@ -87,13 +87,35 @@ function new_context(file_name, code)
         return self.index <= #self.code
     end
 
+    function context:copy()
+        return {
+            file_name = self.file_name,
+            code = self.code,
+            index = self.index,
+            line = self.line,
+            col = self.col,
+            tokens = self.tokens,
+        }
+    end
+
     function context:lex_number()
         local num = ""
+        local ctx = self:copy()
+        local dot_ctx = nil
         while self:is_index_valid() do
             if not self:char():match("[%d.]")
               or (self:char() == "." and num:match("[.]")) then
-                table.insert(self.tokens, new_token("num", num, self))
+                if num:sub(-1) == "." then
+                    table.insert(self.tokens, new_token("num", num:sub(1,-2), ctx))
+                    table.insert(self.tokens, new_token("op", ".", dot_ctx))
+                    return
+                end
+                table.insert(self.tokens, new_token("num", num, ctx))
                 return
+            end
+
+            if self:char() == "." then
+                dot_ctx = self:copy()
             end
 
             num = num .. self:char()
@@ -103,6 +125,7 @@ function new_context(file_name, code)
     
     function context:lex_operator()
         local sym = ""
+        local ctx = self:copy()
         while self:is_index_valid() do
             if not self:char():match("%p") then
                 break
@@ -114,8 +137,9 @@ function new_context(file_name, code)
 
         for i = #sym, 1, -1 do
             if operators[sym:sub(1, i)] then
-                table.insert(self.tokens, new_token("op", sym:sub(1, i), self))
+                table.insert(self.tokens, new_token("op", sym:sub(1, i), ctx))
                 self.index = self.index - #sym + i
+                self.col = self.col - #sym + i
                 return
             end
         end
@@ -123,9 +147,10 @@ function new_context(file_name, code)
 
     function context:lex_word()
         local word = ""
+        local ctx = self:copy()
         while self:is_index_valid() do
             if self:char():match("[%p \n\t\r]") then
-                table.insert(self.tokens, new_token("word", word, self))
+                table.insert(self.tokens, new_token("word", word, ctx))
                 return
             end
 
