@@ -5,6 +5,11 @@ local ctx = {
     index = nil,
 }
 
+-- expr ::= atom
+function ctx:parse_expr()
+    return self:parse_atom()
+end
+
 -- atom ::= IDENTIFIER | NUMBER | STRING | CHAR | parentheses
 function ctx:parse_atom()
     if self:current_token().label == "word" then
@@ -71,7 +76,7 @@ function ctx:err(err) return nil, {err = err, ctx = self} end
 function parser.parse(tokens)
     ctx.tokens = tokens
     ctx.index = 1
-    return ctx:parse_atom()
+    return ctx:parse_expr()
 end
 
 return parser
