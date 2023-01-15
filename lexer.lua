@@ -127,6 +127,28 @@ function new_context(file_name, code)
         local sym = ""
         local ctx = self:copy()
         while self:is_index_valid() do
+            -- Comments
+            if sym == "//" then
+                while self:char() ~= "\n" do
+                    self:increment()
+                end
+                return
+            end
+            if sym == "/*" then
+                while true do
+                    if self:char() == "*" then
+                        self:increment()
+                        if self:char() == "/" then
+                            self:increment()
+                            return
+                        end
+                    else
+                        self:increment()
+                    end
+                end
+                return
+            end
+
             if not self:char():match("%p") then
                 break
             end
