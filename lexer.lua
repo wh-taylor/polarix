@@ -123,6 +123,39 @@ function new_context(file_name, code)
         end
     end
 
+    function context:lex_escape_sequence()
+        self:increment()
+        
+        if self:char() == "a" then return "\a" end
+        if self:char() == "b" then return "\b" end
+        if self:char() == "f" then return "\f" end
+        if self:char() == "n" then return "\n" end
+        if self:char() == "r" then return "\r" end
+        if self:char() == "t" then return "\t" end
+        if self:char() == "v" then return "\v" end
+        if self:char() == "\\" then return "\\" end
+        if self:char() == "\"" then return "\"" end
+        if self:char() == "\'" then return "\'" end
+        
+        -- Octal escape sequence
+        if self:char():match("%d") then
+            local num = nil
+            local num_str = nil
+            for i = 2, 0, -1 do
+                num_str = self.code:sub(self.index, self.index + i)
+                num = tonumber(num_str, 8)
+                if num ~= nil then break end
+            end
+            if num == nil then return "\\" end
+            for i = 2, #num_str do
+                self:increment()
+            end
+            return string.char(num)
+        end
+
+        return "\\"
+    end
+
     function context:lex_string()
         local str = ""
         local ctx = self:copy()
@@ -133,8 +166,13 @@ function new_context(file_name, code)
                 self:increment()
                 return
             end
-
-            str = str .. self:char()
+            
+            if self:char() == "\\" then
+                str = str .. self:lex_escape_sequence()
+            else
+                str = str .. self:char()
+            end
+            
             self:increment()
         end
     end
