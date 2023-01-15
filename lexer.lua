@@ -22,7 +22,8 @@ function new_result(code)
     function result:lex_number()
         local num = ""
         while self:is_index_valid() do
-            if not self:char():match("[%d.]") then
+            if not self:char():match("[%d.]")
+              or (self:char() == "." and num:match("[.]")) then
                 table.insert(self.tokens, num)
                 return
             end
