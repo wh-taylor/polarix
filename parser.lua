@@ -10,25 +10,25 @@ function ctx:parse_atom()
     if self:current_token().label == "word" then
         local name = self:current_token().value
         self:next()
-        return { h = "id", id = name }
+        return { a = "id", id = name }
     end
 
     if self:current_token().label == "num" then
         local name = self:current_token().value
         self:next()
-        return { h = "num", num = name }
+        return { a = "num", num = name }
     end
 
     if self:current_token().label == "str" then
         local name = self:current_token().value
         self:next()
-        return { h = "str", str = name }
+        return { a = "str", str = name }
     end
 
     if self:current_token().label == "char" then
         local name = self:current_token().value
         self:next()
-        return { h = "char", char = name }
+        return { a = "char", char = name }
     end
 
     return ctx:parse_parentheses()
