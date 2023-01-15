@@ -214,7 +214,7 @@ function new_context(file_name, code)
 end
 
 function lexer.lex(file_name, code)
-    local context = new_context(file_name, code)
+    local context = new_context(file_name, code .. "\n")
     
     while context:is_index_valid() do
         local char = context:char()
