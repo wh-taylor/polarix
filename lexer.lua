@@ -15,8 +15,20 @@ function new_result(code)
         self.index = self.index + 1
     end
 
+    function result:is_index_valid()
+        return self.index <= #self.code
+    end
+
     function result:lex_word()
-        print(self.index)
+        local word = ""
+        while self:is_index_valid() do
+            if self:char():match("[%p \n\t\r]") then
+                table.insert(self.tokens, word)
+            end
+
+            word = word .. self:char()
+            self:increment()
+        end
     end
 
     return result
@@ -25,17 +37,18 @@ end
 function lexer.lex(code)
     local result = new_result(code)
     
-    while result.index <= #code do
+    while result:is_index_valid() do
         local char = result:char()
         
         if char:match("%d") then
-            print(char .. ": DIGIT")
+            -- Lex number
         elseif char:match("[ \n\t\r]") then
-            print(char .. ": WHITESPACE")
+            -- Do nothing!
         elseif char:match("%p") then
-            print(char .. ": PUNCTUATION")
+            -- Lex punctuation
         else
-            print(char .. ": LETTER")
+            -- Lex word
+            result:lex_word()
         end
 
         result:increment()
