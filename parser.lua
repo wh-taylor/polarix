@@ -44,6 +44,24 @@ function ctx:parse_parentheses()
     return expression
 end
 
+-- array ::= '[' (expr (',' expr)*)? ']'
+function ctx:parse_array()
+    if not self:match("op", "[") then return self:err("unexpected token") end
+    self:next()
+    local items = {}
+    while not self:match("op", "]") do
+        local expression = self:parse_expr()
+        table.insert(items, expression)
+        if self:match("op", ",") then
+            self:next()
+        elseif not self:match("op", "]") then
+            return self:err("expected ','")
+        end
+    end
+    self:next()
+    return { a = "array", items = items }
+end
+
 -- Auxiliary contextual functions
 function ctx:current_token() return self.tokens[self.index] end
 function ctx:match(label, value) return self:current_token():match(label, value) end
