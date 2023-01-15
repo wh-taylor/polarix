@@ -34,6 +34,16 @@ function ctx:parse_atom()
     return ctx:parse_parentheses()
 end
 
+-- parentheses ::= '(' expr ')' | array
+function ctx:parse_parentheses()
+    if not self:match("op", "(") then return self:parse_array() end
+    self:next()
+    local expression = self:parse_expr()
+    if not self:match("op", ")") then return self:err("expected ')'") end
+    self:next()
+    return expression
+end
+
 -- Auxiliary contextual functions
 function ctx:current_token() return self.tokens[self.index] end
 function ctx:match(label, value) return self:current_token():match(label, value) end
