@@ -128,6 +128,8 @@ function new_parse_context(tokens)
 
             return { name = "identifier", id = name }
         end
+
+        return nil, new_error("expected atom", self)
     end
 
     function context:search_dot_operation()
