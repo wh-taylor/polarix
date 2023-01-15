@@ -1,4 +1,5 @@
 local lexer = require "lexer"
+local parser = require "parser"
 
 function read_file(file)
     local f = io.open(file, "rb")
@@ -13,6 +14,8 @@ function run(file_name)
     if code == nil then return nil end
 
     local tokens = lexer.lex(file_name, code)
+
+    local tree = parser.parse(tokens)
 end
 
 function main()

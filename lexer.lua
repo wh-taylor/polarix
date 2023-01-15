@@ -57,6 +57,10 @@ function new_token(label, value, context)
         col = context.col,
     }
 
+    function token:match(label, value)
+        return self.label == label and self.value == value
+    end
+
     return token
 end
 
