@@ -1,17 +1,29 @@
 local lexer = {}
 
-function lexer.lex(code)
+function new_result(code)
     local result = {
         code = code,
         index = 1,
         tokens = {},
-        char = function(self)
-            return self.code:sub(self.index, self.index)
-        end,
-        increment = function(self)
-            self.index = self.index + 1
-        end,
     }
+
+    function result:char()
+        return self.code:sub(self.index, self.index)
+    end
+
+    function result:increment()
+        self.index = self.index + 1
+    end
+
+    function result:lex_word()
+        print(self.index)
+    end
+
+    return result
+end
+
+function lexer.lex(code)
+    local result = new_result(code)
     
     while result.index <= #code do
         local char = result:char()
