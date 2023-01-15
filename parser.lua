@@ -70,18 +70,7 @@ end
 
 -- array ::= '[' (expr (',' expr)*)? ']'
 function ctx:parse_array()
-    if not self:match("op", "[") then return self:err("unexpected token") end
-    self:next()
-    local items = {}
-    while not self:match("op", "]") do
-        local expression = self:parse_expr()
-        table.insert(items, expression)
-        if self:match("op", ",") then
-            self:next()
-        elseif not self:match("op", "]") then
-            return self:err("expected ','")
-        end
-    end
+    local items = ctx:parse_comma_brackets("[", "]")
     self:next()
     return { a = "array", items = items }
 end
