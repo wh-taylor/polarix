@@ -44,9 +44,7 @@ end
 -- atom ::= IDENTIFIER | NUMBER | STRING | CHAR | parentheses
 function ctx:parse_atom()
     if self:current_token().label == "word" then
-        local name = self:current_token().value
-        self:next()
-        return { a = "id", id = name }
+        return self:parse_identifier()
     end
 
     if self:current_token().label == "num" then
@@ -68,6 +66,12 @@ function ctx:parse_atom()
     end
 
     return ctx:parse_parentheses()
+end
+
+function ctx:parse_identifier()
+    local name = self:current_token().value
+    self:next()
+    return { a = "id", id = name }
 end
 
 -- parentheses ::= '(' expr ')' | array
