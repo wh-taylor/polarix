@@ -5,6 +5,19 @@ local ctx = {
     index = nil,
 }
 
+function parser.parse(tokens)
+    ctx.tokens = tokens
+    ctx.index = 1
+
+    local tree = {}
+    while not ctx:match("eof", "eof") do
+        local func, err = ctx:parse_function()
+        if err ~= nil then return nil, err end
+        table.insert(tree, func)
+    end
+    return tree
+end
+
 -- mocktype ::= IDENTIFIER ('<' IDENTIFIER (',' IDENTIFIER)* '>')?
 function ctx:parse_mocktype()
     if self:current_token().label ~= "word" then return self:err("expected identifier") end
