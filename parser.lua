@@ -10,6 +10,13 @@ function ctx:parse_expr()
     return self:parse_closure()
 end
 
+-- continue ::= 'continue'
+function ctx:parse_continue()
+    if not self:match("word", "break") then return self:parse_break() end
+    self:next()
+    return { a = "continue" }
+end
+
 -- break ::= 'break' expr?
 function ctx:parse_break()
     if not self:match("word", "break") then return self:parse_return() end
