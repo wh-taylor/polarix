@@ -140,15 +140,15 @@ function new_context(file_name, code)
             if self:char() == "'" then
                 if #char > 1 then
                     return { ctx = ctx, err = "char too long" } end
-                table.insert(self.tokens, new_token("char", str, ctx))
+                table.insert(self.tokens, new_token("char", char, ctx))
                 self:increment()
                 return
             end
             
             if self:char() == "\\" then
-                str = str .. self:lex_escape_sequence()
+                char = char .. self:lex_escape_sequence()
             else
-                str = str .. self:char()
+                char = char .. self:char()
             end
             
             self:increment()
