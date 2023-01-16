@@ -521,10 +521,4 @@ function ctx:match(label, value) return self:current_token():match(label, value)
 function ctx:next() self.index = self.index + 1 end
 function ctx:err(err) return nil, {err = err, ctx = self} end
 
-function parser.parse(tokens)
-    ctx.tokens = tokens
-    ctx.index = 1
-    return ctx:parse_function()
-end
-
 return parser
