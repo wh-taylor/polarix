@@ -5,11 +5,6 @@ local ctx = {
     index = nil,
 }
 
--- expr ::= or_expr
-function ctx:parse_expr()
-    return self:parse_closure()
-end
-
 -- block ::= '{' (statement ';')* expr? '}'
 function ctx:parse_block()
     if not self:match("op", "{") then self:err("expected '{'") end
@@ -33,6 +28,19 @@ end
 -- statement ::= assert
 function ctx:parse_statement()
     return self:parse_assert()
+end
+
+-- expr ::= or_expr
+function ctx:parse_expr()
+    return self:parse_loop()
+end
+
+-- loop ::= 'loop' block
+function ctx:parse_loop()
+    if not self:match("word", "loop") then return self:parse_closure() end
+    self:next()
+    local block = self:parse_block()
+    return { a = "loop", block }
 end
 
 -- assert ::= 'assert' expr (',' expr)?
