@@ -12,7 +12,7 @@ end
 
 -- initialize ::= ('let' | 'const') destructure '=' expr
 function ctx:parse_initialize()
-    if not (self:match("word", "let") or self:match("word", "const")) then return self:parse_expr() end
+    if not (self:match("word", "let") or self:match("word", "const")) then return self:parse_assign() end
     local word = self:current_token().value
     self:next()
     local lvalue = self:parse_destructure()
@@ -20,6 +20,19 @@ function ctx:parse_initialize()
     self:next()
     local expr = self:parse_expr()
     return { a = word, lvalue = lvalue, expr = expr }
+end
+
+-- assign ::= id ('=' | '+=' | '-=' | '*=' | '/=' | '%=' | '^=' ) expr
+function ctx:parse_assign()
+    local variable = self:parse_identifier()
+    if not (self:is_one_of({ "=", "+=", "-=", "*=", "/=", "%=", "^=" })) then
+        self.index = self.index - 1
+        return self:parse_expr()
+    end
+    local op = self:current_token().value
+    self:next()
+    local expr = self:parse_expr()
+    return { a = op, id = variable, expr = expr }
 end
 
 -- destructure ::= '(' (IDENTIFIER | destructure) (',' (IDENTIFIER | destructure))* ')'
