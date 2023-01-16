@@ -7,7 +7,18 @@ local ctx = {
 
 -- expr ::= scoper
 function ctx:parse_expr()
-    return self:parse_neg_expr()
+    return self:parse_exp_expr()
+end
+
+-- exp_expr ::= neg_expr ('^' neg_expr)*
+function ctx:parse_exp_expr()
+    local left = self:parse_neg_expr()
+    if self:match("op", "^") then
+        self:next()
+        local right = self:parse_exp_expr()
+        left = { a = "exp", left = left, right = right }
+    end
+    return left
 end
 
 -- neg_expr ::= '-' (scoper | neg_expr)
