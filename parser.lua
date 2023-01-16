@@ -383,7 +383,10 @@ end
 function ctx:parse_cmp_expr()
     local left = self:parse_add_expr()
     while self:is_one_of({ "==", "!=", ">", "<", ">=", "<=" }) do
-        local operator = self:current_token().value
+        local operator = ({
+            ["=="] = "eq", ["!="] = "neq", [">"] = "gt",
+            ["<"] = "lt", [">="] = "gteq", ["<="] = "lteq",
+        })[self:current_token().value]
         self:next()
         local right = self:parse_add_expr()
         left = { a = operator, left = left, right = right }
@@ -395,9 +398,9 @@ end
 function ctx:parse_add_expr()
     local left = self:parse_mult_expr()
     while self:is_one_of({ "+", "-" }) do
-        local operator
-        if self:current_token().value == "+" then operator = "add"
-        elseif self:current_token().value == "-" then operator = "minus" end
+        local operator = ({
+            ["+"] = "add", ["-"] = "sub",
+        })[self:current_token().value]
         self:next()
         local right = self:parse_mult_expr()
         left = { a = operator, left = left, right = right }
@@ -409,10 +412,10 @@ end
 function ctx:parse_mult_expr()
     local left = self:parse_exp_expr()
     while self:is_one_of({ "*", "/", "%" }) do
-        local operator
-        if self:current_token().value == "*" then operator = "mult"
-        elseif self:current_token().value == "/" then operator = "div"
-        elseif self:current_token().value == "%" then operator = "mod" end
+        local operator = ({
+            ["*"] = "mult", ["/"] = "div", ["%"] = "mod",
+        })[self:current_token().value]
+
         self:next()
         local right = self:parse_exp_expr()
         left = { a = operator, left = left, right = right }
