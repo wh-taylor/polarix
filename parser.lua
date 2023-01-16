@@ -10,6 +10,15 @@ function ctx:parse_expr()
     return self:parse_closure()
 end
 
+-- break ::= 'break' expr?
+function ctx:parse_break()
+    if not self:match("word", "break") then return self:parse_return() end
+    self:next()
+    local expr = self:parse_expr()
+    return { a = "break", expr = expr }
+end
+
+-- return ::= 'return' expr?
 function ctx:parse_return()
     if not self:match("word", "return") then return self:parse_initialize() end
     self:next()
