@@ -7,7 +7,26 @@ local ctx = {
 
 -- expr ::= or_expr
 function ctx:parse_expr()
-    return self:parse_or_expr()
+    return self:parse_try_expr()
+end
+
+-- try ::= 'try' expr
+function ctx:parse_try_expr()
+    if not self:match("word", "try") then return self:parse_catch_expr() end
+    self:next()
+    local expression = self:parse_expr()
+    return { a = "try", expr = expression }
+end
+
+-- catch ::= expr 'catch' expr
+function ctx:parse_catch_expr()
+    local left = self:parse_or_expr()
+    if self:match("word", "catch") then
+        self:next()
+        local right = self:parse_or_expr()
+        left = { a = "catch", expr = left, result = right }
+    end
+    return left
 end
 
 -- or_expr ::= and_expr ('or' and_expr)*
