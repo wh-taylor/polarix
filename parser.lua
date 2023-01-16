@@ -7,7 +7,17 @@ local ctx = {
 
 -- expr ::= add_expr
 function ctx:parse_expr()
-    return self:parse_not_expr()
+    return self:parse_and_expr()
+end
+
+function ctx:parse_and_expr()
+    local left = self:parse_not_expr()
+    while self:match("word", "and") do
+        self:next()
+        local right = self:parse_not_expr()
+        left = { a = "and", left = left, right = right }
+    end
+    return left
 end
 
 -- not_expr ::= 'not'? cmp_expr
