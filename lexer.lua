@@ -132,6 +132,30 @@ function new_context(file_name, code)
         return "\\"
     end
 
+    function context:lex_char()
+        local char = ""
+        local ctx = self:copy()
+        self:increment()
+        while self:is_index_valid() do
+            if self:char() == "'" then
+                if #char > 1 then
+                    return { ctx = ctx, err = "char too long" } end
+                table.insert(self.tokens, new_token("char", str, ctx))
+                self:increment()
+                return
+            end
+            
+            if self:char() == "\\" then
+                str = str .. self:lex_escape_sequence()
+            else
+                str = str .. self:char()
+            end
+            
+            self:increment()
+        end
+        return { ctx = ctx, err = "unclosed char" }
+    end
+
     function context:lex_string()
         local str = ""
         local ctx = self:copy()
@@ -151,6 +175,7 @@ function new_context(file_name, code)
             
             self:increment()
         end
+        return { ctx = ctx, err = "unclosed string" }
     end
     
     function context:lex_operator()
@@ -219,23 +244,29 @@ function lexer.lex(file_name, code)
     
     while context:is_index_valid() do
         local char = context:char()
+        local err
         
         if char:match("%d") then
             -- Lex number
-            context:lex_number()
+            err = context:lex_number()
         elseif char:match("[ \n\t\r]") then
             -- Do nothing!
-            context:increment()
+            err = context:increment()
         elseif char == "\"" then
             -- Lex string
-            context:lex_string()
+            err = context:lex_string()
+        elseif char == "'" then
+            -- Lex string
+            err = context:lex_char()
         elseif char:match("%p") then
             -- Lex punctuation
-            context:lex_operator()
+            err = context:lex_operator()
         else
             -- Lex word
-            context:lex_word()
+            err = context:lex_word()
         end
+        
+        if err ~= nil then return nil, err end
     end
 
     table.insert(context.tokens, new_token("eof", "eof", context))

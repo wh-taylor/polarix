@@ -16,15 +16,26 @@ function run(file_name)
     local code = read_file(file_name)
     if code == nil then return nil end
 
-    local tokens = lexer.lex(file_name, code)
+    local tokens, err = lexer.lex(file_name, code)
+    if err ~= nil then
+        print("polarix: "
+            .. err.ctx.file_name
+            .. ":" .. err.ctx.line
+            .. ":" .. err.ctx.col
+            .. ": " .. err.err)
+        return
+    end
 
     local tree, err = parser.parse(tokens)
-    if err ~= nil then print("polarix: "
-        .. err.ctx.tokens[err.ctx.index].file_name
-        .. ":" .. err.ctx.tokens[err.ctx.index].line
-        .. ":" .. err.ctx.tokens[err.ctx.index].col
-        .. ": " .. err.err .. ", found '"
-        .. err.ctx.tokens[err.ctx.index].value .. "'") end
+    if err ~= nil then
+        print("polarix: "
+            .. err.ctx.tokens[err.ctx.index].file_name
+            .. ":" .. err.ctx.tokens[err.ctx.index].line
+            .. ":" .. err.ctx.tokens[err.ctx.index].col
+            .. ": " .. err.err .. ", found '"
+            .. err.ctx.tokens[err.ctx.index].value .. "'")
+        return
+    end
     print(inspect(tree))
 
     interpreter.interpret(tree)
