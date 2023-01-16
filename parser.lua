@@ -314,6 +314,12 @@ function ctx:parse_comma_brackets(right)
     return items
 end
 
+function ctx:is_one_of(values)
+    for i = 1, #values do
+        if self:current_token().value == values[i] then return true end
+    end
+end
+
 function ctx:current_token() return self.tokens[self.index] end
 function ctx:match(label, value) return self:current_token():match(label, value) end
 function ctx:next() self.index = self.index + 1 end
