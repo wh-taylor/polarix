@@ -145,7 +145,7 @@ end
 
 -- function_header ::= 'fn' IDENTIFIER '(' field, ')' type_affix?
 function ctx:parse_function_header()
-    if not self:match("word", "fn") then return self:err("expected 'fn'") end
+    if not self:match("word", "fn") then return self:parse_type() end
     self:next()
     local name = self:parse_identifier()
     if not self:match("op", "(") then return self:err("expected '('") end
@@ -171,6 +171,23 @@ function ctx:parse_function_header()
         parameters = parameters,
         returntype = returntype,
     }
+end
+
+-- typedef ::= 'type' IDENTIFIER '=' type ';'
+function ctx:parse_typedef()
+    if not self:match("word", "type") then
+        return self:err(
+            "expected 'fn', 'struct', 'enum', 'class', 'instance', or 'import'"
+        )
+    end
+    self:next()
+    local type = self:parse_identifier()
+    if not self:match("op", "=") then return self:err("expected '='") end
+    self:next()
+    local definition = self:parse_type()
+    if not self:match("op", ";") then return self:err("expected ';'") end
+    self:next()
+    return { a = "typedef", type = type, definition = definition }
 end
 
 -- field ::= IDENTIFIER type_affix
