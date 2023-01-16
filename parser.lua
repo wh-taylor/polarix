@@ -353,7 +353,7 @@ end
 -- add_expr ::= mult_expr (('+' | '-') mult_expr)*
 function ctx:parse_add_expr()
     local left = self:parse_mult_expr()
-    while self:match("op", "+") or self:match("op", "-") do
+    while self:is_one_of({ "+", "-" }) do
         local operator
         if self:current_token().value == "+" then operator = "add"
         elseif self:current_token().value == "-" then operator = "minus" end
@@ -367,7 +367,7 @@ end
 -- mult_expr ::= exp_expr (('*' | '/' | '%') exp_expr)*
 function ctx:parse_mult_expr()
     local left = self:parse_exp_expr()
-    while self:match("op", "*") or self:match("op", "/") or self:match("op", "%") do
+    while self:is_one_of({ "*", "/", "%" }) do
         local operator
         if self:current_token().value == "*" then operator = "mult"
         elseif self:current_token().value == "/" then operator = "div"
