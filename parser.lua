@@ -203,7 +203,7 @@ function ctx:parse_call_index()
     local called = self:parse_atom()
     while self:match("op", "(") or ctx:match("op", "[") do
         if self:match("op", "(") then
-            local items = self:parse_comma_brackets("(", ")")
+            local items = self:parse_comma_brackets(")")
             self:next()
             called = { a = "call", called = called, args = items }
         elseif self:match("op", "[") then
@@ -262,14 +262,14 @@ end
 
 -- array ::= '[' (expr (',' expr)*)? ']'
 function ctx:parse_array()
-    local items = ctx:parse_comma_brackets("[", "]")
+    if not self:match("op", left) then return self:parse_expr() end
+    local items = ctx:parse_comma_brackets("]")
     self:next()
     return { a = "array", items = items }
 end
 
 -- Auxiliary contextual functions
-function ctx:parse_comma_brackets(left, right)
-    if not self:match("op", left) then return self:err("expected '" .. left .. "'") end
+function ctx:parse_comma_brackets(right)
     self:next()
     local items = {}
     while not self:match("op", right) do
