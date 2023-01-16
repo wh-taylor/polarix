@@ -17,11 +17,38 @@ function parser.parse(tokens)
 
     local tree = {}
     while not ctx:match("eof", "eof") do
-        local func, err = ctx:parse_function()
+        local func, err = ctx:parse_struct()
         if err ~= nil then return nil, err end
         table.insert(tree, func)
     end
     return tree
+end
+
+-- struct ::= 'struct' mocktype ('{' field, '}' | ';')
+function ctx:parse_struct()
+    if not self:match("word", "struct") then return self:parse_function() end
+    self:next()
+    local mocktype = self:parse_mocktype()
+
+    if self:match("op", ";") then
+        self:next()
+        return { a = "struct", mocktype = mocktype }
+    end
+
+    if not self:match("op", "{") then
+        return self:err("expected '{' or ';'")
+    end
+    self:next()
+    
+    local fields = {}
+    while not self:match("op", "}") do
+        table.insert(fields, self:parse_field())
+        if not (self:match("op", "}") or self:match("op", ",")) then
+            return self:err("expected '}' or ','") end
+        if self:match("op", ",") then self:next() end
+    end
+    self:next()
+    return { a = "struct", mocktype = mocktype, fields = fields }
 end
 
 -- mocktype ::= IDENTIFIER ('<' IDENTIFIER, '>')?
