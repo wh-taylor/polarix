@@ -17,13 +17,46 @@ function parser.parse(tokens)
 
     local tree = {}
     while not ctx:match("eof", "eof") do
-        local func, err = ctx:parse_instance()
+        local func, err = ctx:parse_class()
         if err ~= nil then return nil, err end
         table.insert(tree, func)
     end
     return tree
 end
 
+-- class ::= 'class' mocktype '{' ((function_header | type_header) ';'), '}'
+function ctx:parse_class()
+    if not self:match("word", "class") then return self:parse_instance() end
+    self:next()
+    local class = self:parse_mocktype()
+
+    if self:match("op", ";") then
+        self:next()
+        return { a = "class", class = class }
+    end
+
+    if not self:match("op", "{") then
+        return self:err("expected '{' or ';'")
+    end
+    self:next()
+
+    local fields = {}
+    while not self:match("op", "}") do
+        local field
+        if self:match("word", "fn") then
+            field = self:parse_function_header()
+        elseif self:match("word", "type") then
+            field = self:parse_typedef_header()
+        else
+            return self:err("expected 'fn' or 'type'")
+        end
+        table.insert(fields, field)
+        if not self:match("op", ";") then self:err("expected ';'") end
+        self:next()
+    end
+    self:next()
+    return { a = "class", class = class, fields = fields }
+end
 
 -- instance ::= 'instance' mocktype type '{' (function | typedef)* '}'
 function ctx:parse_instance()
@@ -34,7 +67,7 @@ function ctx:parse_instance()
 
     if self:match("op", ";") then
         self:next()
-        return { a = "instance", mocktype = mocktype }
+        return { a = "instance", class = class, type = type }
     end
 
     if not self:match("op", "{") then
@@ -53,9 +86,6 @@ function ctx:parse_instance()
             return self:err("expected 'fn' or 'type'")
         end
         table.insert(fields, field)
-        if not (self:match("op", "}") or self:match("op", ",")) then
-            return self:err("expected '}' or ','") end
-        if self:match("op", ",") then self:next() end
     end
     self:next()
     return { a = "instance", class = class, type = type, fields = fields }
@@ -199,6 +229,14 @@ end
 
 -- typedef ::= 'type' IDENTIFIER '=' type ';'
 function ctx:parse_typedef()
+    local typedef_header = self:parse_typedef_header()
+    local definition = self:parse_type()
+    if not self:match("op", ";") then return self:err("expected ';'") end
+    self:next()
+    return { a = "typedef", type = typedef_header, definition = definition }
+end
+
+function ctx:parse_typedef_header()
     if not self:match("word", "type") then
         return self:err(
             "expected 'fn', 'struct', 'enum', 'class', 'instance', or 'import'"
@@ -206,12 +244,7 @@ function ctx:parse_typedef()
     end
     self:next()
     local type = self:parse_identifier()
-    if not self:match("op", "=") then return self:err("expected '='") end
-    self:next()
-    local definition = self:parse_type()
-    if not self:match("op", ";") then return self:err("expected ';'") end
-    self:next()
-    return { a = "typedef", type = type, definition = definition }
+    return { a = "typedef_header", type = type }
 end
 
 -- field ::= IDENTIFIER type_affix
