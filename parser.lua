@@ -10,6 +10,36 @@ function ctx:parse_expr()
     return self:parse_closure()
 end
 
+-- initialize ::= ('let' | 'const') destructure '=' expr
+function ctx:parse_initialize()
+    if not (self:match("word", "let") or self:match("word", "const")) then return self:parse_expr() end
+    local word = self:current_token().value
+    self:next()
+    local lvalue = self:parse_destructure()
+    if not self:match("op", "=") then return self:err("expected '='") end
+    self:next()
+    local expr = self:parse_expr()
+    return { a = word, lvalue = lvalue, expr = expr }
+end
+
+-- destructure ::= '(' (IDENTIFIER | destructure) (',' (IDENTIFIER | destructure))* ')'
+function ctx:parse_destructure()
+    if not self:match("op", "(") then return self:parse_identifier() end;
+    self:next()
+    local items = {}
+    while not self:match("op", ")") do
+        local expression = self:parse_destructure()
+        table.insert(items, expression)
+        if self:match("op", ",") then
+            self:next()
+        elseif not self:match("op", ")") then
+            return self:err("expected ','")
+        end
+    end
+    self:next()
+    return items
+end
+
 -- type ::= IDENTIFIER ('<' type '>')?
 function ctx:parse_type()
     if self:current_token().label ~= "word" then return self:err("expected identifier") end
@@ -292,7 +322,7 @@ function ctx:err(err) return nil, {err = err, ctx = self} end
 function parser.parse(tokens)
     ctx.tokens = tokens
     ctx.index = 1
-    return ctx:parse_expr()
+    return ctx:parse_initialize()
 end
 
 return parser
