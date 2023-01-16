@@ -10,6 +10,13 @@ function ctx:parse_expr()
     return self:parse_closure()
 end
 
+function ctx:parse_return()
+    if not self:match("word", "return") then return self:parse_initialize() end
+    self:next()
+    local expr = self:parse_expr()
+    return { a = "return", expr = expr }
+end
+
 -- initialize ::= ('let' | 'const') destructure '=' expr
 function ctx:parse_initialize()
     if not (self:match("word", "let") or self:match("word", "const")) then return self:parse_assign() end
@@ -330,7 +337,7 @@ function ctx:err(err) return nil, {err = err, ctx = self} end
 function parser.parse(tokens)
     ctx.tokens = tokens
     ctx.index = 1
-    return ctx:parse_initialize()
+    return ctx:parse_return()
 end
 
 return parser
