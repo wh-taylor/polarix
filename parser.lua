@@ -10,6 +10,11 @@ function ctx:parse_expr()
     return self:parse_closure()
 end
 
+-- statement ::= assert
+function ctx:parse_statement()
+    return self:parse_assert()
+end
+
 -- assert ::= 'assert' expr (',' expr)?
 function ctx:parse_assert()
     if not self:match("word", "assert") then return self:parse_continue() end
@@ -366,7 +371,7 @@ function ctx:err(err) return nil, {err = err, ctx = self} end
 function parser.parse(tokens)
     ctx.tokens = tokens
     ctx.index = 1
-    return ctx:parse_return()
+    return ctx:parse_statement()
 end
 
 return parser
