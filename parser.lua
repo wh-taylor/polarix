@@ -7,7 +7,15 @@ local ctx = {
 
 -- expr ::= add_expr
 function ctx:parse_expr()
-    return self:parse_cmp_expr()
+    return self:parse_not_expr()
+end
+
+-- not_expr ::= 'not'? cmp_expr
+function ctx:parse_not_expr()
+    if not self:match("word", "not") then return self:parse_cmp_expr() end
+    self:next()
+    local expression = self:parse_not_expr()
+    return { a = "not", value = expression }
 end
 
 -- cmp_expr ::= add_expr (('==' | '!=' | '>' | '<' | '>=' | '<=') add_expr)*
