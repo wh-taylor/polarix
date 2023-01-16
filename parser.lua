@@ -10,6 +10,26 @@ function ctx:parse_expr()
     return self:parse_closure()
 end
 
+-- block ::= '{' (statement ';')* expr? '}'
+function ctx:parse_block()
+    if not self:match("op", "{") then self:err("expected '{'") end
+    self:next()
+    local statements = {}
+    local expr = nil
+    while not self:match("op", "}") do
+        local statement = self:parse_statement()
+        if not (self:match("op", ";") or self:match("op", "}")) then return self:err("expected ';' or '}'") end
+        if self:match("op", ";") then
+            table.insert(statements, statement)
+            self:next()
+        else
+            expr = statement
+        end
+    end
+    self:next()
+    return { a = "block", statements = statements, expr = expr }
+end
+
 -- statement ::= assert
 function ctx:parse_statement()
     return self:parse_assert()
