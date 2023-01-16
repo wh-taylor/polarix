@@ -5,11 +5,23 @@ local ctx = {
     index = nil,
 }
 
--- expr ::= add_expr
+-- expr ::= or_expr
 function ctx:parse_expr()
-    return self:parse_and_expr()
+    return self:parse_or_expr()
 end
 
+-- or_expr ::= and_expr ('or' and_expr)*
+function ctx:parse_or_expr()
+    local left = self:parse_and_expr()
+    while self:match("word", "or") do
+        self:next()
+        local right = self:parse_and_expr()
+        left = { a = "or", left = left, right = right }
+    end
+    return left
+end
+
+-- and_expr ::= not_expr ('and' not_expr)*
 function ctx:parse_and_expr()
     local left = self:parse_not_expr()
     while self:match("word", "and") do
