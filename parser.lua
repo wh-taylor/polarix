@@ -5,6 +5,12 @@ local ctx = {
     index = nil,
 }
 
+local function is_one_of(self, values)
+    for i = 1, #values do
+        if self == values[i] then return true end
+    end
+end
+
 function parser.parse(tokens)
     ctx.tokens = tokens
     ctx.index = 1
@@ -110,13 +116,22 @@ function ctx:parse_block()
     local expr = nil
     while not self:match("op", "}") do
         local statement = self:parse_statement()
-        if not (self:match("op", ";") or self:match("op", "}")) then
-            return self:err("expected ';' or '}'") end
-        if self:match("op", ";") then
-            table.insert(statements, statement)
-            self:next()
+
+        if is_one_of(statement.a, { "for", "if", "while", "loop" }) then
+            if statement.block.expr ~= nil then
+                expr = statement
+            else
+                table.insert(statements, statement)
+            end
         else
-            expr = statement
+            if not (self:match("op", ";") or self:match("op", "}")) then
+                return self:err("expected ';' or '}'") end
+            if self:match("op", ";") then
+                table.insert(statements, statement)
+                self:next()
+            else
+                expr = statement
+            end
         end
     end
     self:next()
