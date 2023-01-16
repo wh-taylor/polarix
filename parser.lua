@@ -7,7 +7,30 @@ local ctx = {
 
 -- expr ::= add_expr
 function ctx:parse_expr()
-    return self:parse_add_expr()
+    return self:parse_cmp_expr()
+end
+
+-- cmp_expr ::= add_expr (('==' | '!=' | '>' | '<' | '>=' | '<=') add_expr)*
+function ctx:parse_cmp_expr()
+    local left = self:parse_add_expr()
+    while self:match("op", "==")
+      or self:match("op", "!=")
+      or self:match("op", ">")
+      or self:match("op", "<")
+      or self:match("op", ">=")
+      or self:match("op", "<=") do
+        local operator
+        if self:current_token().value == "==" then operator = "eq"
+        elseif self:current_token().value == "!=" then operator = "neq"
+        elseif self:current_token().value == ">" then operator = "gt"
+        elseif self:current_token().value == "<" then operator = "lt"
+        elseif self:current_token().value == ">=" then operator = "gteq"
+        elseif self:current_token().value == "<=" then operator = "lteq" end
+        self:next()
+        local right = self:parse_add_expr()
+        left = { a = operator, left = left, right = right }
+    end
+    return left
 end
 
 -- add_expr ::= mult_expr (('+' | '-') mult_expr)*
