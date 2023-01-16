@@ -32,7 +32,16 @@ end
 
 -- expr ::= or_expr
 function ctx:parse_expr()
-    return self:parse_loop()
+    return self:parse_while()
+end
+
+-- while ::= 'while' expr block
+function ctx:parse_while()
+    if not self:match("word", "while") then return self:parse_closure() end
+    self:next()
+    local condition = self:parse_expr()
+    local block = self:parse_block()
+    return { a = "while", condition = condition, block = block }
 end
 
 -- loop ::= 'loop' block
@@ -40,7 +49,7 @@ function ctx:parse_loop()
     if not self:match("word", "loop") then return self:parse_closure() end
     self:next()
     local block = self:parse_block()
-    return { a = "loop", block }
+    return { a = "loop", block = block }
 end
 
 -- assert ::= 'assert' expr (',' expr)?
