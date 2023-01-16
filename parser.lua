@@ -32,7 +32,25 @@ end
 
 -- expr ::= or_expr
 function ctx:parse_expr()
-    return self:parse_while()
+    return self:parse_if()
+end
+
+-- if ::= 'if' expr block ('else' 'if' expr block)* ('else' block)?
+function ctx:parse_if()
+    if not self:match("word", "if") then return self:parse_closure() end
+    self:next()
+    local condition = self:parse_expr()
+    local block = self:parse_block()
+    local elseblock = {}
+    if self:match("word", "else") then
+        self:next()
+        if self:match("op", "{") then
+            elseblock = self:parse_block()
+        elseif self:match("word", "if") then
+            elseblock = self:parse_if()
+        end
+    end
+    return { a = "if", condition = condition, block = block, elseblock = elseblock }
 end
 
 -- while ::= 'while' expr block
