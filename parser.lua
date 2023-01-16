@@ -10,6 +10,19 @@ function ctx:parse_expr()
     return self:parse_closure()
 end
 
+-- assert ::= 'assert' expr (',' expr)?
+function ctx:parse_assert()
+    if not self:match("word", "assert") then return self:parse_continue() end
+    self:next()
+    local expr = self:parse_expr()
+    local result
+    if self:match("op", ",") then
+        self:next()
+        result = self:parse_expr()
+    end
+    return { a = "assert", expr = expr, result = result }
+end
+
 -- continue ::= 'continue'
 function ctx:parse_continue()
     if not self:match("word", "break") then return self:parse_break() end
