@@ -22,9 +22,62 @@ function ctx:parse_mocktype()
     return { a = "mocktype", name = name, subtypes = subtypes }
 end
 
+-- function ::= function_header (block | '=' expr ';')
+function ctx:parse_function()
+    local function_header = self:parse_function_header()
+    local block
+    if self:match("op", "{") then
+        block = self:parse_block()
+    elseif self:match("op", "=") then
+        self:next()
+        block = { a = "block", statements = {}, expr = self:parse_expr() }
+        if not self:match("op", ";") then return self:err("expected ';'") end
+    end
+    return { a = "function", name = function_header.name, parameters = function_header.parameters, returntype = function_header.returntype, block = block }
+end
+
+-- function_header ::= 'fn' IDENTIFIER '(' (field (',' field)*)? ')' type_affix?
+function ctx:parse_function_header()
+    if not self:match("word", "fn") then return self:err("expected 'fn'") end
+    self:next()
+    local name = self:parse_identifier()
+    if not self:match("op", "(") then return self:err("expected '('") end
+    self:next()
+
+    local parameters = {}
+    while not self:match("op", ")") do
+        local field = self:parse_field()
+        table.insert(parameters, { name = field.name, type = field.type })
+
+        if not (self:match("op", ",") or self:match("op", ")")) then return self:err("expected ',' or ')'") end
+        if self:match("op", ",") then self:next() end
+    end
+    self:next()
+
+    local returntype = { a = "type", name = "void", subtypes = {} }
+    if self:match("op", ":") then returntype = self:parse_type_affix() end
+
+    return { a = "function_header", name = name, parameters = parameters, returntype = returntype }
+end
+
+-- field ::= IDENTIFIER type_affix
+function ctx:parse_field()
+    local name = self:parse_identifier()
+    local type = self:parse_type_affix()
+    return { name = name, type = type }
+end
+
+-- type_affix ::= ':' type
+function ctx:parse_type_affix()
+    if not self:match("op", ":") then return self:err("expected ':'") end
+    self:next()
+    local type = self:parse_type()
+    return type
+end
+
 -- block ::= '{' (statement ';')* expr? '}'
 function ctx:parse_block()
-    if not self:match("op", "{") then self:err("expected '{'") end
+    if not self:match("op", "{") then return self:err("expected '{'") end
     self:next()
     local statements = {}
     local expr = nil
@@ -456,7 +509,7 @@ function ctx:err(err) return nil, {err = err, ctx = self} end
 function parser.parse(tokens)
     ctx.tokens = tokens
     ctx.index = 1
-    return ctx:parse_statement()
+    return ctx:parse_function()
 end
 
 return parser
