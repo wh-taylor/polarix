@@ -217,7 +217,7 @@ end
 
 -- continue ::= 'continue'
 function ctx:parse_continue()
-    if not self:match("word", "break") then return self:parse_break() end
+    if not self:match("word", "continue") then return self:parse_break() end
     self:next()
     return { a = "continue" }
 end
