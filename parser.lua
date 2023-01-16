@@ -5,6 +5,23 @@ local ctx = {
     index = nil,
 }
 
+-- mocktype ::= IDENTIFIER ('<' IDENTIFIER (',' IDENTIFIER)* '>')?
+function ctx:parse_mocktype()
+    if self:current_token().label ~= "word" then return self:err("expected identifier") end
+    local name = self:parse_identifier()
+    local subtypes = {}
+    if self:match("op", "<") then
+        self:next()
+        while not self:match("op", ">") do
+            table.insert(subtypes, self:parse_identifier())
+            if not (self:match("op", ">") or self:match("op", ",")) then return self:err("expected '>' or ','") end
+            if self:match("op", ",") then self:next() end
+        end
+        self:next()
+    end
+    return { a = "mocktype", name = name, subtypes = subtypes }
+end
+
 -- block ::= '{' (statement ';')* expr? '}'
 function ctx:parse_block()
     if not self:match("op", "{") then self:err("expected '{'") end
