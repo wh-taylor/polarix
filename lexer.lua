@@ -102,16 +102,15 @@ function new_context(file_name, code)
     function context:lex_escape_sequence()
         self:increment()
         
-        if self:char() == "a" then return "\a" end
-        if self:char() == "b" then return "\b" end
-        if self:char() == "f" then return "\f" end
-        if self:char() == "n" then return "\n" end
-        if self:char() == "r" then return "\r" end
-        if self:char() == "t" then return "\t" end
-        if self:char() == "v" then return "\v" end
-        if self:char() == "\\" then return "\\" end
-        if self:char() == "\"" then return "\"" end
-        if self:char() == "\'" then return "\'" end
+        local single_char_sequences = {
+            ["a"] = "\a",  ["b"] = "\b",
+            ["f"] = "\f",  ["n"] = "\n",
+            ["r"] = "\r",  ["t"] = "\t",
+            ["v"] = "\v",  ["'"] = "'",
+            ["\\"] = "\\", ["\""] = "\"",
+        }
+        if single_char_sequences[self:char()] then
+            return single_char_sequences[self:char()] end
         
         -- Octal escape sequence
         if self:char():match("%d") then
