@@ -7,7 +7,22 @@ local ctx = {
 
 -- expr ::= scoper
 function ctx:parse_expr()
-    return self:parse_exp_expr()
+    return self:parse_mult_expr()
+end
+
+-- mult_expr ::= exp_expr (('*' | '/' | '%') exp_expr)*
+function ctx:parse_mult_expr()
+    local left = self:parse_exp_expr()
+    while self:match("op", "*") or self:match("op", "/") or self:match("op", "%") do
+        local operator
+        if self:current_token().value == "*" then operator = "mult"
+        elseif self:current_token().value == "/" then operator = "div"
+        elseif self:current_token().value == "%" then operator = "mod" end
+        self:next()
+        local right = self:parse_exp_expr()
+        left = { a = operator, left = left, right = right }
+    end
+    return left
 end
 
 -- exp_expr ::= neg_expr ('^' neg_expr)*
