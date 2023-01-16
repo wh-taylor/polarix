@@ -32,12 +32,24 @@ end
 
 -- expr ::= or_expr
 function ctx:parse_expr()
-    return self:parse_if()
+    return self:parse_for()
+end
+
+-- for ::= 'for' destructure 'in' expr block
+function ctx:parse_for()
+    if not self:match("word", "for") then return self:parse_if() end
+    self:next()
+    local lvalue = self:parse_destructure()
+    if not self:match("word", "in") then return self:err("expected 'in'") end
+    self:next()
+    local iterable = self:parse_expr()
+    local block = self:parse_block()
+    return { a = "for", lvalue = lvalue, iterable = iterable, block = block }
 end
 
 -- if ::= 'if' expr block ('else' 'if' expr block)* ('else' block)?
 function ctx:parse_if()
-    if not self:match("word", "if") then return self:parse_closure() end
+    if not self:match("word", "if") then return self:parse_while() end
     self:next()
     local condition = self:parse_expr()
     local block = self:parse_block()
@@ -55,7 +67,7 @@ end
 
 -- while ::= 'while' expr block
 function ctx:parse_while()
-    if not self:match("word", "while") then return self:parse_closure() end
+    if not self:match("word", "while") then return self:parse_loop() end
     self:next()
     local condition = self:parse_expr()
     local block = self:parse_block()
