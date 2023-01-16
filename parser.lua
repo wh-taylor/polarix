@@ -32,6 +32,7 @@ end
 
 -- expr ::= or_expr
 function ctx:parse_expr()
+    if self:match("op", "{") then return self:parse_block() end
     return self:parse_for()
 end
 
