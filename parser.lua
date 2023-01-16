@@ -195,10 +195,12 @@ function ctx:parse_initialize()
     local word = self:current_token().value
     self:next()
     local lvalue = self:parse_destructure()
+    local type
+    if self:match("op", ":") then type = self:parse_type_affix() end
     if not self:match("op", "=") then return self:err("expected '='") end
     self:next()
     local expr = self:parse_expr()
-    return { a = word, lvalue = lvalue, expr = expr }
+    return { a = word, lvalue = lvalue, type = type, expr = expr }
 end
 
 -- assign ::= id ('=' | '+=' | '-=' | '*=' | '/=' | '%=' | '^=' ) expr
