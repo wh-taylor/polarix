@@ -1,8 +1,8 @@
 local lexer = {}
 
-local ops = { "(", ")", "{", "}", "[", "]", ".", ",", "/", "\\", "+", "-",
-    "=", "!", "@", "#", "$", "%", "^", "&", "*", "`", "~", "?", "<", ">", ":",
-    ";", "|", "->", "=>", ">=", "<=", "==", "+=", "-=", "*=", "/=", "%=", "::" }
+local ops = { "(", ")", "{", "}", "[", "]", ".", ",", "/", "\\", "+", "-", "=",
+  "!", "@", "#", "$", "%", "^", "&", "*", "`", "~", "?", "<", ">", ":", ";",
+  "|", "->", "=>", ">=", "<=", "==", "+=", "-=", "*=", "/=", "%=", "::" }
 
 local operators = {}
 
@@ -75,7 +75,8 @@ function new_context(file_name, code)
             if not self:char():match("[%d.]")
               or (self:char() == "." and num:match("[.]")) then
                 if num:sub(-1) == "." then
-                    table.insert(self.tokens, new_token("num", num:sub(1,-2), ctx))
+                    table.insert(self.tokens,
+                        new_token("num", num:sub(1,-2), ctx))
                     table.insert(self.tokens, new_token("op", ".", dot_ctx))
                 else
                     table.insert(self.tokens, new_token("num", num, ctx))

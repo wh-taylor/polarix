@@ -18,16 +18,18 @@ function parser.parse(tokens)
     return tree
 end
 
--- mocktype ::= IDENTIFIER ('<' IDENTIFIER (',' IDENTIFIER)* '>')?
+-- mocktype ::= IDENTIFIER ('<' IDENTIFIER, '>')?
 function ctx:parse_mocktype()
-    if self:current_token().label ~= "word" then return self:err("expected identifier") end
+    if self:current_token().label ~= "word" then
+        return self:err("expected identifier") end
     local name = self:parse_identifier()
     local subtypes = {}
     if self:match("op", "<") then
         self:next()
         while not self:match("op", ">") do
             table.insert(subtypes, self:parse_identifier())
-            if not (self:match("op", ">") or self:match("op", ",")) then return self:err("expected '>' or ','") end
+            if not (self:match("op", ">") or self:match("op", ",")) then
+                return self:err("expected '>' or ','") end
             if self:match("op", ",") then self:next() end
         end
         self:next()
@@ -46,10 +48,16 @@ function ctx:parse_function()
         block = { a = "block", statements = {}, expr = self:parse_expr() }
         if not self:match("op", ";") then return self:err("expected ';'") end
     end
-    return { a = "function", name = function_header.name, parameters = function_header.parameters, returntype = function_header.returntype, block = block }
+    return {
+        a = "function",
+        name = function_header.name,
+        parameters = function_header.parameters,
+        returntype = function_header.returntype,
+        block = block
+    }
 end
 
--- function_header ::= 'fn' IDENTIFIER '(' (field (',' field)*)? ')' type_affix?
+-- function_header ::= 'fn' IDENTIFIER '(' field, ')' type_affix?
 function ctx:parse_function_header()
     if not self:match("word", "fn") then return self:err("expected 'fn'") end
     self:next()
@@ -62,7 +70,8 @@ function ctx:parse_function_header()
         local field = self:parse_field()
         table.insert(parameters, { name = field.name, type = field.type })
 
-        if not (self:match("op", ",") or self:match("op", ")")) then return self:err("expected ',' or ')'") end
+        if not (self:match("op", ",") or self:match("op", ")")) then
+            return self:err("expected ',' or ')'") end
         if self:match("op", ",") then self:next() end
     end
     self:next()
@@ -70,7 +79,12 @@ function ctx:parse_function_header()
     local returntype = { a = "type", name = "void", subtypes = {} }
     if self:match("op", ":") then returntype = self:parse_type_affix() end
 
-    return { a = "function_header", name = name, parameters = parameters, returntype = returntype }
+    return {
+        a = "function_header",
+        name = name,
+        parameters = parameters,
+        returntype = returntype,
+    }
 end
 
 -- field ::= IDENTIFIER type_affix
@@ -96,7 +110,8 @@ function ctx:parse_block()
     local expr = nil
     while not self:match("op", "}") do
         local statement = self:parse_statement()
-        if not (self:match("op", ";") or self:match("op", "}")) then return self:err("expected ';' or '}'") end
+        if not (self:match("op", ";") or self:match("op", "}")) then
+            return self:err("expected ';' or '}'") end
         if self:match("op", ";") then
             table.insert(statements, statement)
             self:next()
@@ -146,7 +161,12 @@ function ctx:parse_if()
             elseblock = self:parse_if()
         end
     end
-    return { a = "if", condition = condition, block = block, elseblock = elseblock }
+    return {
+        a = "if",
+        condition = condition,
+        block = block,
+        elseblock = elseblock
+    }
 end
 
 -- while ::= 'while' expr block
@@ -204,7 +224,8 @@ end
 
 -- initialize ::= ('let' | 'const') destructure '=' expr
 function ctx:parse_initialize()
-    if not (self:match("word", "let") or self:match("word", "const")) then return self:parse_assign() end
+    if not (self:match("word", "let") or self:match("word", "const")) then
+        return self:parse_assign() end
     local word = self:current_token().value
     self:next()
     local lvalue = self:parse_destructure()
@@ -229,7 +250,7 @@ function ctx:parse_assign()
     return { a = op, id = variable, expr = expr }
 end
 
--- destructure ::= '(' (IDENTIFIER | destructure) (',' (IDENTIFIER | destructure))* ')'
+-- destructure ::= '(' (IDENTIFIER | destructure), ')'
 function ctx:parse_destructure()
     if not self:match("op", "(") then return self:parse_identifier() end;
     self:next()
@@ -249,7 +270,8 @@ end
 
 -- type ::= IDENTIFIER ('<' type '>')?
 function ctx:parse_type()
-    if self:current_token().label ~= "word" then return self:err("expected identifier") end
+    if self:current_token().label ~= "word" then
+        return self:err("expected identifier") end
     local name = self:current_token().value
     local subtypes = {}
     self:next()
@@ -257,7 +279,8 @@ function ctx:parse_type()
         self:next()
         while not self:match("op", ">") do
             table.insert(subtypes, self:parse_type())
-            if not (self:match("op", ">") or self:match("op", ",")) then return self:err("expected '>' or ','") end
+            if not (self:match("op", ">") or self:match("op", ",")) then
+                return self:err("expected '>' or ','") end
             if self:match("op", ",") then self:next() end
         end
         self:next()
@@ -271,7 +294,8 @@ function ctx:parse_closure()
     self:next()
     local parameters = {}
     while not self:match("op", "|") do
-        if self:current_token().label ~= "word" then return self:err("expected identifier") end
+        if self:current_token().label ~= "word" then
+            return self:err("expected identifier") end
         local name = self:current_token().value
         self:next()
 
@@ -281,7 +305,8 @@ function ctx:parse_closure()
         local type = self:parse_type()
         table.insert(parameters, { name = name, type = type })
 
-        if not (self:match("op", ",") or self:match("op", "|")) then return self:err("expected ',' or '|'") end
+        if not (self:match("op", ",") or self:match("op", "|")) then
+            return self:err("expected ',' or '|'") end
         if self:match("op", ",") then self:next() end
     end
     self:next()
@@ -424,7 +449,7 @@ function ctx:parse_dot()
     return source
 end
 
--- call_index ::= (atom | call_index) ('[' expr ']' | '(' (expr (',' expr)*)? ')')*
+-- call_index ::= (atom | call_index) ('[' expr ']' | '(' expr, ')')*
 function ctx:parse_call_index()
     local called = self:parse_atom()
     while self:match("op", "(") or ctx:match("op", "[") do
@@ -435,7 +460,8 @@ function ctx:parse_call_index()
         elseif self:match("op", "[") then
             self:next()
             local expression = self:parse_expr()
-            if not self:match("op", "]") then return ctx:err("expected ']'") end
+            if not self:match("op", "]") then
+                return ctx:err("expected ']'") end
             self:next()
             called = { a = "index", indexed = called, arg = expression }
         end
@@ -486,7 +512,7 @@ function ctx:parse_parentheses()
     return expression
 end
 
--- array ::= '[' (expr (',' expr)*)? ']'
+-- array ::= '[' expr, ']'
 function ctx:parse_array()
     if not self:match("op", left) then return self:parse_expr() end
     local items = ctx:parse_comma_brackets("]")
@@ -516,9 +542,20 @@ function ctx:is_one_of(values)
     end
 end
 
-function ctx:current_token() return self.tokens[self.index] end
-function ctx:match(label, value) return self:current_token():match(label, value) end
-function ctx:next() self.index = self.index + 1 end
-function ctx:err(err) return nil, {err = err, ctx = self} end
+function ctx:current_token()
+    return self.tokens[self.index]
+end
+
+function ctx:match(label, value)
+    return self:current_token():match(label, value)
+end
+
+function ctx:next()
+    self.index = self.index + 1
+end
+
+function ctx:err(err)
+    return nil, {err = err, ctx = self}
+end
 
 return parser
