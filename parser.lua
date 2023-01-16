@@ -17,11 +17,21 @@ function parser.parse(tokens)
 
     local tree = {}
     while not ctx:match("eof", "eof") do
-        local func, err = ctx:parse_class()
+        local func, err = ctx:parse_import()
         if err ~= nil then return nil, err end
         table.insert(tree, func)
     end
     return tree
+end
+
+-- import ::= 'import' IDENTIFIER ';'
+function ctx:parse_import()
+    if not self:match("word", "import") then return self:parse_class() end
+    self:next()
+    local imported = self:parse_identifier()
+    if not self:match("op", ";") then return self:err("expected ';'") end
+    self:next()
+    return { a = "import", imported = imported }
 end
 
 -- class ::= 'class' mocktype '{' ((function_header | type_header) ';'), '}'
