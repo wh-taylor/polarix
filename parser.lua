@@ -7,7 +7,7 @@ local ctx = {
 
 -- expr ::= or_expr
 function ctx:parse_expr()
-    return self:parse_try_expr()
+    return self:parse_closure()
 end
 
 -- type ::= IDENTIFIER ('<' type '>')?
@@ -26,6 +26,30 @@ function ctx:parse_type()
         self:next()
     end
     return { a = "type", name = name, subtypes = subtypes }
+end
+
+-- closure :: '|' (IDENTIFIER ':' type)* '|' expr
+function ctx:parse_closure()
+    if not self:match("op", "|") then return self:parse_try_expr() end
+    self:next()
+    local parameters = {}
+    while not self:match("op", "|") do
+        if self:current_token().label ~= "word" then return self:err("expected identifier") end
+        local name = self:current_token().value
+        self:next()
+
+        if not self:match("op", ":") then return self:err("expected ':'") end
+        self:next()
+        
+        local type = self:parse_type()
+        table.insert(parameters, { name = name, type = type })
+
+        if not (self:match("op", ",") or self:match("op", "|")) then return self:err("expected ',' or '|'") end
+        if self:match("op", ",") then self:next() end
+    end
+    self:next()
+    local expr = self:parse_expr()
+    return { a = "closure", parameters = parameters, expr = expr }
 end
 
 -- try ::= 'try' expr
