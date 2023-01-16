@@ -17,11 +17,24 @@ function parser.parse(tokens)
 
     local tree = {}
     while not ctx:match("eof", "eof") do
-        local func, err = ctx:parse_enum()
+        local func, err = ctx:parse_typedef()
         if err ~= nil then return nil, err end
         table.insert(tree, func)
     end
     return tree
+end
+
+-- typedef ::= 'type' IDENTIFIER '=' type ';'
+function ctx:parse_typedef()
+    if not self:match("word", "type") then return self:parse_enum() end
+    self:next()
+    local type = self:parse_identifier()
+    if not self:match("op", "=") then return self:err("expected '='") end
+    self:next()
+    local definition = self:parse_type()
+    if not self:match("op", ";") then return self:err("expected ';'") end
+    self:next()
+    return { a = "typedef", type = type, definition = definition }
 end
 
 -- enum ::= 'enum' type_def '{' enum_field, '}'
