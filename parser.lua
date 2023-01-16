@@ -17,11 +17,51 @@ function parser.parse(tokens)
 
     local tree = {}
     while not ctx:match("eof", "eof") do
-        local func, err = ctx:parse_struct()
+        local func, err = ctx:parse_enum()
         if err ~= nil then return nil, err end
         table.insert(tree, func)
     end
     return tree
+end
+
+-- enum ::= 'enum' type_def '{' enum_field, '}'
+function ctx:parse_enum()
+    if not self:match("word", "enum") then return self:parse_struct() end
+    self:next()
+    local mocktype = self:parse_mocktype()
+
+    if not self:match("op", "{") then return self:err("expected '{'") end
+    self:next()
+
+    local fields = {}
+    while not self:match("op", "}") do
+        table.insert(fields, self:parse_enum_field())
+        if not (self:match("op", "}") or self:match("op", ",")) then
+            return self:err("expected '}' or ','") end
+        if self:match("op", ",") then self:next() end
+    end
+    self:next()
+    if #fields == 0 then
+        return self:err("expected at least one enum field") end
+    return { a = "enum", mocktype = mocktype, fields = fields }
+end
+
+-- enum_field ::= IDENTIFIER ('(' type, ')')?
+function ctx:parse_enum_field()
+    local name = self:parse_identifier()
+    local types = {}
+    if self:match("op", "(") then
+        self:next()
+        while not self:match("op", ")") do
+            table.insert(types, self:parse_type())
+            if not (self:match("op", ")") or self:match("op", ",")) then
+                return self:err("expected ')' or ','") end
+            if self:match("op", ",") then self:next() end
+        end
+        self:next()
+        if #types == 0 then return self:err("expected type") end
+    end
+    return { name = name, types = types }
 end
 
 -- struct ::= 'struct' mocktype ('{' field, '}' | ';')
@@ -39,7 +79,7 @@ function ctx:parse_struct()
         return self:err("expected '{' or ';'")
     end
     self:next()
-    
+
     local fields = {}
     while not self:match("op", "}") do
         table.insert(fields, self:parse_field())
