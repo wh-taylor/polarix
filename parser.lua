@@ -5,9 +5,23 @@ local ctx = {
     index = nil,
 }
 
--- expr ::= scoper
+-- expr ::= add_expr
 function ctx:parse_expr()
-    return self:parse_mult_expr()
+    return self:parse_add_expr()
+end
+
+-- add_expr ::= mult_expr (('+' | '-') mult_expr)*
+function ctx:parse_add_expr()
+    local left = self:parse_mult_expr()
+    while self:match("op", "+") or self:match("op", "-") do
+        local operator
+        if self:current_token().value == "+" then operator = "add"
+        elseif self:current_token().value == "-" then operator = "minus" end
+        self:next()
+        local right = self:parse_mult_expr()
+        left = { a = operator, left = left, right = right }
+    end
+    return left
 end
 
 -- mult_expr ::= exp_expr (('*' | '/' | '%') exp_expr)*
