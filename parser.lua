@@ -17,24 +17,48 @@ function parser.parse(tokens)
 
     local tree = {}
     while not ctx:match("eof", "eof") do
-        local func, err = ctx:parse_typedef()
+        local func, err = ctx:parse_instance()
         if err ~= nil then return nil, err end
         table.insert(tree, func)
     end
     return tree
 end
 
--- typedef ::= 'type' IDENTIFIER '=' type ';'
-function ctx:parse_typedef()
-    if not self:match("word", "type") then return self:parse_enum() end
+
+-- instance ::= 'instance' mocktype type '{' (function | typedef)* '}'
+function ctx:parse_instance()
+    if not self:match("word", "instance") then return self:parse_enum() end
     self:next()
-    local type = self:parse_identifier()
-    if not self:match("op", "=") then return self:err("expected '='") end
+    local class = self:parse_mocktype()
+    local type = self:parse_type()
+
+    if self:match("op", ";") then
+        self:next()
+        return { a = "instance", mocktype = mocktype }
+    end
+
+    if not self:match("op", "{") then
+        return self:err("expected '{' or ';'")
+    end
     self:next()
-    local definition = self:parse_type()
-    if not self:match("op", ";") then return self:err("expected ';'") end
+
+    local fields = {}
+    while not self:match("op", "}") do
+        local field
+        if self:match("word", "fn") then
+            field = self:parse_function()
+        elseif self:match("word", "type") then
+            field = self:parse_typedef()
+        else
+            return self:err("expected 'fn' or 'type'")
+        end
+        table.insert(fields, field)
+        if not (self:match("op", "}") or self:match("op", ",")) then
+            return self:err("expected '}' or ','") end
+        if self:match("op", ",") then self:next() end
+    end
     self:next()
-    return { a = "typedef", type = type, definition = definition }
+    return { a = "instance", class = class, type = type, fields = fields }
 end
 
 -- enum ::= 'enum' type_def '{' enum_field, '}'
