@@ -10,6 +10,24 @@ function ctx:parse_expr()
     return self:parse_try_expr()
 end
 
+-- type ::= IDENTIFIER ('<' type '>')?
+function ctx:parse_type()
+    if self:current_token().label ~= "word" then return self:err("expected identifier") end
+    local name = self:current_token().value
+    local subtypes = {}
+    self:next()
+    if self:match("op", "<") then
+        self:next()
+        while not self:match("op", ">") do
+            table.insert(subtypes, self:parse_type())
+            if not (self:match("op", ">") or self:match("op", ",")) then return self:err("expected '>' or ','") end
+            if self:match("op", ",") then self:next() end
+        end
+        self:next()
+    end
+    return { a = "type", name = name, subtypes = subtypes }
+end
+
 -- try ::= 'try' expr
 function ctx:parse_try_expr()
     if not self:match("word", "try") then return self:parse_catch_expr() end
