@@ -7,12 +7,24 @@ local ctx = {
 
 -- expr ::= scoper
 function ctx:parse_expr()
-    return self:parse_scoper()
+    return self:parse_neg_expr()
+end
+
+-- neg_expr ::= '-' (scoper | neg_expr)
+function ctx:parse_neg_expr()
+    if not self:match("op", "-") then return self:parse_scoper() end
+    self:next()
+    local expression = self:parse_neg_expr()
+    return { a = "neg", value = expression }
 end
 
 -- scoper ::= (id | scoper) '::' dot
 function ctx:parse_scoper()
     local scope = self:parse_identifier()
+    if not self:match("op", "::") then
+        self.index = self.index - 1
+        return self:parse_dot()
+    end
     while self:match("op", "::") do
         self:next()
         local member = self:parse_dot()
