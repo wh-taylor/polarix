@@ -51,6 +51,19 @@ function interpreter.interpret(tree)
     ctx.namespaces = {}
     ctx.locals = {}
 
+    ctx:scope_in()
+    for i = 1, #tree do
+        if tree[i].a == "function" then
+            local paramtypes = {}
+            for j = 1, #tree[i].parameters do
+                table.insert(paramtypes, tree[i].parameters[j].type)
+            end
+            table.insert(paramtypes, tree[i].returntype)
+            ctx:new_variable(tree[i].name.id, tree[i],
+                maketype("Fn", paramtypes))
+        end
+    end
+
     for i = 1, #tree do
         if tree[i].a == "function" and tree[i].name.id == "main" then
             local value, err = ctx:walk_function(tree[i], {})
@@ -58,6 +71,7 @@ function interpreter.interpret(tree)
             break
         end
     end
+    ctx:scope_out()
 end
 
 function ctx:walk_function(node, parameters)
