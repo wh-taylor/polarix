@@ -240,6 +240,8 @@ end
 -- typedef ::= 'type' IDENTIFIER '=' type ';'
 function ctx:parse_typedef()
     local typedef_header = self:parse_typedef_header()
+    if not self:match("op", "=") then return self:err("expected '='") end
+    self:next()
     local definition = self:parse_type()
     if not self:match("op", ";") then return self:err("expected ';'") end
     self:next()
