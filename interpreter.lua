@@ -53,6 +53,15 @@ function interpreter.interpret(tree)
 
     ctx:scope_in()
     for i = 1, #tree do
+        if tree[i].a == "enum" then
+            ctx.namespaces[tree[i].mocktype.name.id] = {}
+            for j = 1, #tree[i].fields do
+                ctx.namespaces
+                    [tree[i].mocktype.name.id]
+                    [tree[i].fields[j].name.id] = tree[i].fields[j]
+            end
+        end
+
         if tree[i].a == "function" then
             local paramtypes = {}
             for j = 1, #tree[i].parameters do
