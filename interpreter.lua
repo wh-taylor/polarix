@@ -54,8 +54,13 @@ function ctx:walk_expr(node)
 end
 
 function ctx:walk_string(node)
-    if node.a ~= "str" then return nil end
+    if node.a ~= "str" then return self:walk_char(node) end
     return self:value(node.str, { a = "type", name = "String", subtypes = {} })
+end
+
+function ctx:walk_char(node)
+    if node.a ~= "char" then return nil end
+    return self:value(node.char, { a = "type", name = "char", subtypes = {} })
 end
 
 return interpreter
