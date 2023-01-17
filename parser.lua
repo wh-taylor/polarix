@@ -197,6 +197,7 @@ function ctx:parse_function()
         self:next()
         block = { a = "block", statements = {}, expr = self:parse_expr() }
         if not self:match("op", ";") then return self:err("expected ';'") end
+        self:next()
     end
     return {
         a = "function",
