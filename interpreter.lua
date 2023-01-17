@@ -127,10 +127,16 @@ function ctx:walk_add(node)
 end
 
 function ctx:walk_exp(node)
-    if node.a ~= "exp" then return self:walk_call(node) end
+    if node.a ~= "exp" then return self:walk_neg(node) end
     local left = self:walk_expr(node.left)
     local right = self:walk_expr(node.right)
     return self:value(left.value ^ right.value, left.type)
+end
+
+function ctx:walk_neg(node)
+    if node.a ~= "neg" then return self:walk_call(node) end
+    local value = self:walk_expr(node.value)
+    return self:value(-value.value, value.type)
 end
 
 function ctx:walk_call(node)
