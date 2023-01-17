@@ -4,6 +4,11 @@ local interpreter = {}
 
 local ctx = {}
 
+local function maketype(name, subtypes)
+    if subtypes == nil then subtypes = {} end
+    return { a = "type", name = name, subtypes = subtypes }
+end
+
 function ctx:scope_in()
     table.insert(ctx.locals, {})
 end
@@ -50,7 +55,12 @@ function ctx:walk_function(node, parameters)
 end
 
 function ctx:walk_expr(node)
-    return ctx:walk_string(node)
+    return ctx:walk_num(node)
+end
+
+function ctx:walk_num(node)
+    if node.a ~= "num" then return self:walk_string(node) end
+    return self:value(node.num, maketype("Num"))
 end
 
 function ctx:walk_string(node)
