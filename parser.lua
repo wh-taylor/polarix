@@ -451,8 +451,15 @@ function ctx:parse_destructure()
     return items
 end
 
--- type ::= IDENTIFIER ('<' type '>')?
+-- type ::= IDENTIFIER ('<' type '>')? | '[' type ']'
 function ctx:parse_type()
+    if self:match("op", "[") then
+        self:next()
+        local type = self:parse_type()
+        if not self:match("op", "]") then return self:err("expected ']'") end
+        self:next()
+        return { a = "type", name = "Array", subtypes = { type } }
+    end
     if self:current_token().label ~= "word" then
         return self:err("expected identifier") end
     local name = self:current_token().value
