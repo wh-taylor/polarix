@@ -88,7 +88,16 @@ function ctx:walk_function(node, parameters)
 end
 
 function ctx:walk_expr(node)
-    return ctx:walk_try(node)
+    return ctx:walk_closure(node)
+end
+
+function ctx:walk_closure(node)
+    if node.a ~= "closure" then return self:walk_try(node) end
+    local paramtypes = {}
+    for i = 1, #node.parameters do
+        table.insert(paramtypes, node.parameters[i].type)
+    end
+    return self:value(node, maketype("Closure", paramtypes))
 end
 
 function ctx:walk_try(node)
