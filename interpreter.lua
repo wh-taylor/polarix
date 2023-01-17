@@ -90,8 +90,23 @@ function ctx:walk_string(node)
 end
 
 function ctx:walk_char(node)
-    if node.a ~= "char" then return nil end
+    if node.a ~= "char" then return self:walk_array(node) end
     return self:value(node.char, { a = "type", name = "char", subtypes = {} })
+end
+
+function ctx:walk_array(node)
+    if node.a ~= "array" then return nil end
+    local elements = {}
+    local type
+    for i = 1, #node.items do
+        local result = self:walk_expr(node.items[i])
+        elements[i - 1] = result.value
+        if type and not types_match(type, result.type) then
+            return nil, "literal array types do not match"
+        end
+        if not type then type = result.type end
+    end
+    return self:value(elements, maketype("Array", { type }))
 end
 
 return interpreter
