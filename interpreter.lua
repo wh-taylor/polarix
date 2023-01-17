@@ -88,7 +88,7 @@ function ctx:walk_function(node, parameters)
 end
 
 function ctx:walk_expr(node)
-    return ctx:walk_mod(node)
+    return ctx:walk_eq(node)
 end
 
 function ctx:walk_mod(node)
@@ -160,7 +160,7 @@ end
 
 function ctx:walk_num(node)
     if node.a ~= "num" then return self:walk_string(node) end
-    return self:value(node.num, maketype("Num"))
+    return self:value(tonumber(node.num), maketype("Num"))
 end
 
 function ctx:walk_string(node)
