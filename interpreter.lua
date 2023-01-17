@@ -88,7 +88,14 @@ function ctx:walk_function(node, parameters)
 end
 
 function ctx:walk_expr(node)
-    return ctx:walk_sub(node)
+    return ctx:walk_mult(node)
+end
+
+function ctx:walk_mult(node)
+    if node.a ~= "mult" then return self:walk_sub(node) end
+    local left = self:walk_expr(node.left)
+    local right = self:walk_expr(node.right)
+    return self:value(left.value * right.value, left.type)
 end
 
 function ctx:walk_sub(node)
