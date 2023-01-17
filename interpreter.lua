@@ -88,7 +88,14 @@ function ctx:walk_function(node, parameters)
 end
 
 function ctx:walk_expr(node)
-    return ctx:walk_call(node)
+    return ctx:walk_add(node)
+end
+
+function ctx:walk_add(node)
+    if node.a ~= "add" then return self:walk_call(node) end
+    local left = self:walk_expr(node.left)
+    local right = self:walk_expr(node.right)
+    return self:value(left.value + right.value, left.type)
 end
 
 function ctx:walk_call(node)
