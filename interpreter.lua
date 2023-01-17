@@ -88,7 +88,14 @@ function ctx:walk_function(node, parameters)
 end
 
 function ctx:walk_expr(node)
-    return ctx:walk_not(node)
+    return ctx:walk_and(node)
+end
+
+function ctx:walk_and(node)
+    if node.a ~= "and" then return self:walk_not(node) end
+    local left = self:walk_expr(node.left)
+    local right = self:walk_expr(node.right)
+    return self:value(left.value and right.value, maketype("boolean", {}))
 end
 
 function ctx:walk_not(node)
