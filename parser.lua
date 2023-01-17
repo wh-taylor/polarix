@@ -700,7 +700,7 @@ end
 
 -- array ::= '[' expr, ']'
 function ctx:parse_array()
-    if not self:match("op", left) then return self:parse_expr() end
+    if not self:match("op", '[') then return self:parse_expr() end
     local items = ctx:parse_comma_brackets("]")
     self:next()
     return { a = "array", items = items }
