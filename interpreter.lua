@@ -91,7 +91,7 @@ function ctx:walk_block(node)
     for i = 1, #node.statements do
         local value, err = self:walk_statement(node.statements[i])
     end
-    return self:walk_expr(node.expr)
+    if node.expr then return self:walk_expr(node.expr) end
 end
 
 function ctx:walk_statement(node)
