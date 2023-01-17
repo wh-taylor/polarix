@@ -88,7 +88,19 @@ function ctx:walk_function(node, parameters)
 end
 
 function ctx:walk_expr(node)
-    return ctx:walk_or(node)
+    return ctx:walk_try(node)
+end
+
+function ctx:walk_try(node)
+    if node.a ~= "try" then return self:walk_catch(node) end
+    -- need to implement Result first
+    return nil
+end
+
+function ctx:walk_catch(node)
+    if node.a ~= "catch" then return self:walk_or(node) end
+    -- need to implement Result first
+    return nil
 end
 
 function ctx:walk_or(node)
