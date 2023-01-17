@@ -50,10 +50,12 @@ function interpreter.interpret(tree)
     ctx.tree = tree
     ctx.namespaces = {}
     ctx.locals = {}
+    ctx.types = {}
 
     ctx:scope_in()
     for i = 1, #tree do
         if tree[i].a == "enum" then
+            table.insert(ctx.types, tree[i].mocktype)
             ctx.namespaces[tree[i].mocktype.name.id] = {}
             for j = 1, #tree[i].fields do
                 ctx.namespaces
