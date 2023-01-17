@@ -67,6 +67,7 @@ function interpreter.interpret(tree)
     for i = 1, #tree do
         if tree[i].a == "function" and tree[i].name.id == "main" then
             local value, err = ctx:walk_function(tree[i], {})
+            print(inspect(value)) -- for testing purposes
             if err then return nil, err end
             break
         end
@@ -77,13 +78,18 @@ end
 function ctx:walk_function(node, parameters)
     self:scope_in()
     local value, err = ctx:walk_expr(node.block.expr)
-    print(inspect(value))
     self:scope_out()
     return value, err
 end
 
 function ctx:walk_expr(node)
-    return ctx:walk_var(node)
+    return ctx:walk_call(node)
+end
+
+function ctx:walk_call(node)
+    if node.a ~= "call" then return self:walk_var(node) end
+    local called, err = self:walk_expr(node.called)
+    return self:walk_function(called.value, called.args)
 end
 
 function ctx:walk_var(node)
