@@ -77,6 +77,11 @@ end
 
 function ctx:walk_function(node, parameters)
     self:scope_in()
+    for i = 1, #parameters do
+        local param = self:walk_expr(parameters[i])
+        self:new_variable(node.parameters[i].name.id, param.value, param.type)
+    end
+
     local value, err = ctx:walk_expr(node.block.expr)
     self:scope_out()
     return value, err
@@ -89,7 +94,7 @@ end
 function ctx:walk_call(node)
     if node.a ~= "call" then return self:walk_var(node) end
     local called, err = self:walk_expr(node.called)
-    return self:walk_function(called.value, called.args)
+    return self:walk_function(called.value, node.args)
 end
 
 function ctx:walk_var(node)
