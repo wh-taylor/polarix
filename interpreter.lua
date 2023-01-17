@@ -88,7 +88,14 @@ function ctx:walk_function(node, parameters)
 end
 
 function ctx:walk_expr(node)
-    return ctx:walk_and(node)
+    return ctx:walk_or(node)
+end
+
+function ctx:walk_or(node)
+    if node.a ~= "or" then return self:walk_and(node) end
+    local left = self:walk_expr(node.left)
+    local right = self:walk_expr(node.right)
+    return self:value(left.value or right.value, maketype("boolean", {}))
 end
 
 function ctx:walk_and(node)
