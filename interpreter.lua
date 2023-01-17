@@ -88,7 +88,13 @@ function ctx:walk_function(node, parameters)
 end
 
 function ctx:walk_expr(node)
-    return ctx:walk_gt(node)
+    return ctx:walk_not(node)
+end
+
+function ctx:walk_not(node)
+    if node.a ~= "not" then return self:walk_gt(node) end
+    local value = self:walk_expr(node.value)
+    return self:value(not value.value, maketype("boolean", {}))
 end
 
 function ctx:walk_gt(node)
