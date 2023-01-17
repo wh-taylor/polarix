@@ -88,7 +88,35 @@ function ctx:walk_function(node, parameters)
 end
 
 function ctx:walk_expr(node)
-    return ctx:walk_eq(node)
+    return ctx:walk_gt(node)
+end
+
+function ctx:walk_gt(node)
+    if node.a ~= "gt" then return self:walk_lt(node) end
+    local left = self:walk_expr(node.left)
+    local right = self:walk_expr(node.right)
+    return self:value(left.value > right.value, maketype("boolean", {}))
+end
+
+function ctx:walk_lt(node)
+    if node.a ~= "lt" then return self:walk_gteq(node) end
+    local left = self:walk_expr(node.left)
+    local right = self:walk_expr(node.right)
+    return self:value(left.value < right.value, maketype("boolean", {}))
+end
+
+function ctx:walk_gteq(node)
+    if node.a ~= "gteq" then return self:walk_lteq(node) end
+    local left = self:walk_expr(node.left)
+    local right = self:walk_expr(node.right)
+    return self:value(left.value >= right.value, maketype("boolean", {}))
+end
+
+function ctx:walk_lteq(node)
+    if node.a ~= "lteq" then return self:walk_eq(node) end
+    local left = self:walk_expr(node.left)
+    local right = self:walk_expr(node.right)
+    return self:value(left.value <= right.value, maketype("boolean", {}))
 end
 
 function ctx:walk_eq(node)
