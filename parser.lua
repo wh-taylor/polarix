@@ -148,7 +148,7 @@ function ctx:parse_enum_field()
         self:next()
         if #types == 0 then return self:err("expected type") end
     end
-    return { name = name, types = types }
+    return { a = "enum_field", name = name, types = types }
 end
 
 -- struct ::= 'struct' mocktype ('{' field, '}' | ';')
