@@ -91,6 +91,20 @@ function ctx:walk_expr(node)
     return ctx:walk_eq(node)
 end
 
+function ctx:walk_eq(node)
+    if node.a ~= "eq" then return self:walk_neq(node) end
+    local left = self:walk_expr(node.left)
+    local right = self:walk_expr(node.right)
+    return self:value(left.value == right.value, maketype("boolean", {}))
+end
+
+function ctx:walk_neq(node)
+    if node.a ~= "neq" then return self:walk_mod(node) end
+    local left = self:walk_expr(node.left)
+    local right = self:walk_expr(node.right)
+    return self:value(left.value ~= right.value, maketype("boolean", {}))
+end
+
 function ctx:walk_mod(node)
     if node.a ~= "mod" then return self:walk_div(node) end
     local left = self:walk_expr(node.left)
