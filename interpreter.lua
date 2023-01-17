@@ -82,9 +82,26 @@ function ctx:walk_function(node, parameters)
         self:new_variable(node.parameters[i].name.id, param.value, param.type)
     end
 
-    local value, err = ctx:walk_expr(node.block.expr)
+    local value, err = ctx:walk_block(node.block)
     self:scope_out()
     return value, err
+end
+
+function ctx:walk_block(node)
+    for i = 1, #node.statements do
+        local value, err = self:walk_statement(node.statements[i])
+    end
+    return self:walk_expr(node.expr)
+end
+
+function ctx:walk_statement(node)
+    return ctx:walk_let(node)
+end
+
+function ctx:walk_let(node)
+    if node.a ~= "let" then return self:walk_expr(node) end
+    local expr = self:walk_expr(node.expr)
+    self:new_variable(node.lvalue.id, expr.value, expr.type)
 end
 
 function ctx:walk_expr(node)
