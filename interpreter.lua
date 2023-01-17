@@ -21,12 +21,13 @@ function ctx:new_variable(name, value, type)
     ctx.locals[#ctx.locals][name] = { value = value, type = type }
 end
 
-function ctx:get_variable_value(name)
+function ctx:get_var(name)
     for scope = #ctx.locals, 1, -1 do
         if ctx.locals[scope][name] then
             return ctx.locals[scope][name]
         end
     end
+    return nil, "variable has not been initialized"
 end
 
 function ctx:value(value, type)
@@ -40,7 +41,8 @@ function interpreter.interpret(tree)
 
     for i = 1, #tree do
         if tree[i].a == "function" and tree[i].name.id == "main" then
-            ctx:walk_function(tree[i], {})
+            local value, err = ctx:walk_function(tree[i], {})
+            if err then return nil, err end
             break
         end
     end
@@ -48,14 +50,21 @@ end
 
 function ctx:walk_function(node, parameters)
     self:scope_in()
-    local value = ctx:walk_expr(node.block.expr)
+    local value, err = ctx:walk_expr(node.block.expr)
     print(inspect(value))
     self:scope_out()
-    return value
+    return value, err
 end
 
 function ctx:walk_expr(node)
-    return ctx:walk_num(node)
+    return ctx:walk_var(node)
+end
+
+function ctx:walk_var(node)
+    if node.a ~= "id" then return self:walk_num(node) end
+    local var, err = self:get_var(node.id)
+    if err then return nil, err end
+    return self:value(var.value, var.type)
 end
 
 function ctx:walk_num(node)
