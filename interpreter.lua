@@ -9,6 +9,18 @@ local function maketype(name, subtypes)
     return { a = "type", name = name, subtypes = subtypes }
 end
 
+local function types_match(type1, type2)
+    if type1.a ~= type2.a then return false end
+    if type1.name ~= type2.name then return false end
+    if #type1.subtypes ~= #type2.subtypes then return false end
+    for i = 1, #type1.subtypes do
+        if not types_match(type1.subtypes[i], type2.subtypes[i]) then
+            return false
+        end
+    end
+    return true
+end
+
 function ctx:scope_in()
     table.insert(ctx.locals, {})
 end
