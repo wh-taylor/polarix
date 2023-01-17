@@ -88,7 +88,14 @@ function ctx:walk_function(node, parameters)
 end
 
 function ctx:walk_expr(node)
-    return ctx:walk_div(node)
+    return ctx:walk_mod(node)
+end
+
+function ctx:walk_mod(node)
+    if node.a ~= "mod" then return self:walk_div(node) end
+    local left = self:walk_expr(node.left)
+    local right = self:walk_expr(node.right)
+    return self:value(math.fmod(left.value, right.value), left.type)
 end
 
 function ctx:walk_div(node)
