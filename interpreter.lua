@@ -79,7 +79,12 @@ function interpreter.interpret(tree)
         if tree[i].a == "function" and tree[i].name.id == "main" then
             local value, err = ctx:walk_function(tree[i], {})
             if err then return nil, err end
-            print(value.value) -- for testing purposes
+            -- for testing purposes
+            if value then
+                print(value.value)
+            else
+                print("No output value")
+            end
             break
         end
     end
