@@ -181,8 +181,6 @@ end
 
 -- mocktype ::= IDENTIFIER ('<' IDENTIFIER, '>')?
 function ctx:parse_mocktype()
-    if self:current_token().label ~= "word" then
-        return self:err("expected identifier") end
     local name, err = self:parse_identifier()
     if err ~= nil then return nil, err end
     local subtypes = {}
@@ -762,10 +760,12 @@ function ctx:parse_atom()
         return { a = "char", char = name }
     end
 
-    return ctx:parse_parentheses()
+    return self:parse_parentheses()
 end
 
 function ctx:parse_identifier()
+    if self:current_token().label ~= "word" then
+        return self:err("expected identifier") end
     local name = self:current_token().value
     self:next()
     return { a = "id", id = name }
