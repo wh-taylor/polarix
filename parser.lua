@@ -466,6 +466,7 @@ end
 
 -- assign ::= id ('=' | '+=' | '-=' | '*=' | '/=' | '%=' | '^=' ) expr
 function ctx:parse_assign()
+    if self:current_token().label ~= "word" then return self:parse_expr() end
     local variable, err = self:parse_identifier()
     if err ~= nil then return nil, err end
     if not (self:is_one_of({ "=", "+=", "-=", "*=", "/=", "%=", "^=" })) then
