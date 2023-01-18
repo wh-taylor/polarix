@@ -722,15 +722,16 @@ end
 
 -- scoper ::= (atom | scoper) '::' atom
 function ctx:parse_scoper()
+    if self:current_token().label ~= "word" then return self:parse_atom() end
     local scope, err = self:parse_identifier()
     if err ~= nil then return nil, err end
     if not self:match("op", "::") then
         self.index = self.index - 1
         return self:parse_atom()
     end
-    while self:match("op", "::") do
+    if self:match("op", "::") then
         self:next()
-        local member, err = self:parse_identifier()
+        local member, err = self:parse_scoper()
         if err ~= nil then return nil, err end
         scope = { a = "scoper", scope = scope, member = member }
     end
