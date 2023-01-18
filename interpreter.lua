@@ -270,9 +270,18 @@ function ctx:walk_call(node)
 end
 
 function ctx:walk_index(node)
-    if node.a ~= "index" then return self:walk_var(node) end
+    if node.a ~= "index" then return self:walk_bool(node) end
     local indexed, err = self:walk_expr(node.indexed)
     return indexed.value[tonumber(self:walk_expr(node.arg).value)]
+end
+
+function ctx:walk_bool(node)
+    if not node.a == "id" then return self:walk_var(node) end
+    if node.id == "true" then
+        return self:value(true, maketype("boolean")) end
+    if node.id == "false" then
+        return self:value(false, maketype("boolean")) end
+    return self:walk_var(node)
 end
 
 function ctx:walk_var(node)
