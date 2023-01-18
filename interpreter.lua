@@ -298,12 +298,12 @@ end
 
 function ctx:walk_string(node)
     if node.a ~= "str" then return self:walk_char(node) end
-    return self:value(node.str, { a = "type", name = "String", subtypes = {} })
+    return self:value(node.str, maketype("String"))
 end
 
 function ctx:walk_char(node)
     if node.a ~= "char" then return self:walk_array(node) end
-    return self:value(node.char, { a = "type", name = "char", subtypes = {} })
+    return self:value(node.char, maketype("char"))
 end
 
 function ctx:walk_array(node)
