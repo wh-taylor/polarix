@@ -144,62 +144,62 @@ function ctx:walk_or(node)
     if node.a ~= "or" then return self:walk_and(node) end
     local left = self:walk_expr(node.left)
     local right = self:walk_expr(node.right)
-    return self:value(left.value or right.value, maketype("boolean", {}))
+    return self:value(left.value or right.value, maketype("boolean"))
 end
 
 function ctx:walk_and(node)
     if node.a ~= "and" then return self:walk_not(node) end
     local left = self:walk_expr(node.left)
     local right = self:walk_expr(node.right)
-    return self:value(left.value and right.value, maketype("boolean", {}))
+    return self:value(left.value and right.value, maketype("boolean"))
 end
 
 function ctx:walk_not(node)
     if node.a ~= "not" then return self:walk_gt(node) end
     local value = self:walk_expr(node.value)
-    return self:value(not value.value, maketype("boolean", {}))
+    return self:value(not value.value, maketype("boolean"))
 end
 
 function ctx:walk_gt(node)
     if node.a ~= "gt" then return self:walk_lt(node) end
     local left = self:walk_expr(node.left)
     local right = self:walk_expr(node.right)
-    return self:value(left.value > right.value, maketype("boolean", {}))
+    return self:value(left.value > right.value, maketype("boolean"))
 end
 
 function ctx:walk_lt(node)
     if node.a ~= "lt" then return self:walk_gteq(node) end
     local left = self:walk_expr(node.left)
     local right = self:walk_expr(node.right)
-    return self:value(left.value < right.value, maketype("boolean", {}))
+    return self:value(left.value < right.value, maketype("boolean"))
 end
 
 function ctx:walk_gteq(node)
     if node.a ~= "gteq" then return self:walk_lteq(node) end
     local left = self:walk_expr(node.left)
     local right = self:walk_expr(node.right)
-    return self:value(left.value >= right.value, maketype("boolean", {}))
+    return self:value(left.value >= right.value, maketype("boolean"))
 end
 
 function ctx:walk_lteq(node)
     if node.a ~= "lteq" then return self:walk_eq(node) end
     local left = self:walk_expr(node.left)
     local right = self:walk_expr(node.right)
-    return self:value(left.value <= right.value, maketype("boolean", {}))
+    return self:value(left.value <= right.value, maketype("boolean"))
 end
 
 function ctx:walk_eq(node)
     if node.a ~= "eq" then return self:walk_neq(node) end
     local left = self:walk_expr(node.left)
     local right = self:walk_expr(node.right)
-    return self:value(left.value == right.value, maketype("boolean", {}))
+    return self:value(left.value == right.value, maketype("boolean"))
 end
 
 function ctx:walk_neq(node)
     if node.a ~= "neq" then return self:walk_mod(node) end
     local left = self:walk_expr(node.left)
     local right = self:walk_expr(node.right)
-    return self:value(left.value ~= right.value, maketype("boolean", {}))
+    return self:value(left.value ~= right.value, maketype("boolean"))
 end
 
 function ctx:walk_mod(node)
