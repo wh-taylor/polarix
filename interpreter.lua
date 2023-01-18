@@ -245,9 +245,22 @@ function ctx:walk_exp(node)
 end
 
 function ctx:walk_neg(node)
-    if node.a ~= "neg" then return self:walk_call(node) end
+    if node.a ~= "neg" then return self:walk_scoper(node) end
     local value = self:walk_expr(node.value)
     return self:value(-value.value, value.type)
+end
+
+function ctx:walk_scoper(node)
+    if node.a ~= "scoper" then return self:walk_call(node) end
+    -- NEEDS TESTING
+    local function scoper(node, scope)
+        if node.member.a == "scoper" then
+            return scoper(node.member, scope[node.scope.id])
+        end
+        return scope[node.member.id]
+    end
+
+    return self:walk_expr(scoper(node, self.namespaces[node.scope.id]))
 end
 
 function ctx:walk_call(node)
