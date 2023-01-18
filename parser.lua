@@ -676,30 +676,13 @@ function ctx:parse_exp_expr()
     return left
 end
 
--- neg_expr ::= '-' (scoper | neg_expr)
+-- neg_expr ::= '-' (dot | neg_expr)
 function ctx:parse_neg_expr()
-    if not self:match("op", "-") then return self:parse_scoper() end
+    if not self:match("op", "-") then return self:parse_dot() end
     self:next()
     local expression, err = self:parse_neg_expr()
     if err ~= nil then return nil, err end
     return { a = "neg", value = expression }
-end
-
--- scoper ::= (id | scoper) '::' dot
-function ctx:parse_scoper()
-    local scope, err = self:parse_identifier()
-    if err ~= nil then return nil, err end
-    if not self:match("op", "::") then
-        self.index = self.index - 1
-        return self:parse_dot()
-    end
-    while self:match("op", "::") do
-        self:next()
-        local member, err = self:parse_dot()
-        if err ~= nil then return nil, err end
-        scope = { a = "scoper", scope = scope, member = member }
-    end
-    return scope
 end
 
 -- dot ::= (call_index | dot) '.' call_index
@@ -715,9 +698,9 @@ function ctx:parse_dot()
     return source
 end
 
--- call_index ::= (atom | call_index) ('[' expr ']' | '(' expr, ')')*
+-- call_index ::= (scoper | call_index) ('[' expr ']' | '(' expr, ')')*
 function ctx:parse_call_index()
-    local called, err = self:parse_atom()
+    local called, err = self:parse_scoper()
     if err ~= nil then return nil, err end
     while self:match("op", "(") or ctx:match("op", "[") do
         if self:match("op", "(") then
@@ -736,6 +719,23 @@ function ctx:parse_call_index()
         end
     end
     return called
+end
+
+-- scoper ::= (atom | scoper) '::' atom
+function ctx:parse_scoper()
+    local scope, err = self:parse_identifier()
+    if err ~= nil then return nil, err end
+    if not self:match("op", "::") then
+        self.index = self.index - 1
+        return self:parse_atom()
+    end
+    while self:match("op", "::") do
+        self:next()
+        local member, err = self:parse_identifier()
+        if err ~= nil then return nil, err end
+        scope = { a = "scoper", scope = scope, member = member }
+    end
+    return scope
 end
 
 -- atom ::= IDENTIFIER | NUMBER | STRING | CHAR | parentheses
