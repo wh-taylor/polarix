@@ -91,6 +91,18 @@ function interpreter.interpret(tree)
     ctx:scope_out()
 end
 
+function ctx:walk_closure_call(node, parameters)
+    self:scope_in()
+    for i = 1, #parameters do
+        local param = self:walk_expr(parameters[i])
+        self:new_variable(node.parameters[i].name.id, param.value, param.type)
+    end
+
+    local value, err = self:walk_expr(node.expr)
+    self:scope_out()
+    return value, err
+end
+
 function ctx:walk_function(node, parameters)
     self:scope_in()
     for i = 1, #parameters do
@@ -271,7 +283,10 @@ end
 function ctx:walk_call(node)
     if node.a ~= "call" then return self:walk_index(node) end
     local called, err = self:walk_expr(node.called)
-    return self:walk_function(called.value, node.args)
+    if called.type.name == "Fn" then
+        return self:walk_function(called.value, node.args) end
+    if called.type.name == "Closure" then
+        return self:walk_closure_call(called.value, node.args) end
 end
 
 function ctx:walk_index(node)

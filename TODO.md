@@ -1,6 +1,5 @@
 # TODO
 
-- [ ] Implement calling closures
 - [ ] Improve runtime errors
 - [ ] Implement traits and instances
 - [ ] Solve number literal issue
@@ -11,3 +10,4 @@
 - [ ] Implement modules
 - [ ] Type check everything
 - [ ] Prohibit keywords as identifiers
+- [x] Implement calling closures
