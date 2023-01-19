@@ -26,7 +26,7 @@ end
 
 -- import ::= 'import' IDENTIFIER ';'
 function ctx:parse_import()
-    if not self:match("word", "import") then return self:parse_class() end
+    if not self:match("word", "import") then return self:parse_trait() end
     self:next()
     local imported, err = self:parse_identifier()
     if err ~= nil then return nil, err end
@@ -35,16 +35,16 @@ function ctx:parse_import()
     return { a = "import", imported = imported }
 end
 
--- class ::= 'class' mocktype '{' ((function_header | type_header) ';'), '}'
-function ctx:parse_class()
-    if not self:match("word", "class") then return self:parse_instance() end
+-- trait ::= 'trait' mocktype '{' ((function_header | type_header) ';'), '}'
+function ctx:parse_trait()
+    if not self:match("word", "trait") then return self:parse_instance() end
     self:next()
-    local class, err = self:parse_mocktype()
+    local trait, err = self:parse_mocktype()
     if err ~= nil then return nil, err end
 
     if self:match("op", ";") then
         self:next()
-        return { a = "class", class = class }
+        return { a = "trait", trait = trait }
     end
 
     if not self:match("op", "{") then
@@ -69,21 +69,21 @@ function ctx:parse_class()
         self:next()
     end
     self:next()
-    return { a = "class", class = class, fields = fields }
+    return { a = "trait", trait = trait, fields = fields }
 end
 
 -- instance ::= 'instance' mocktype type '{' (function | typedef)* '}'
 function ctx:parse_instance()
     if not self:match("word", "instance") then return self:parse_enum() end
     self:next()
-    local class, err = self:parse_mocktype()
+    local trait, err = self:parse_mocktype()
     if err ~= nil then return nil, err end
     local type, err = self:parse_type()
     if err ~= nil then return nil, err end
 
     if self:match("op", ";") then
         self:next()
-        return { a = "instance", class = class, type = type }
+        return { a = "instance", trait = trait, type = type }
     end
 
     if not self:match("op", "{") then
@@ -106,7 +106,7 @@ function ctx:parse_instance()
         table.insert(fields, field)
     end
     self:next()
-    return { a = "instance", class = class, type = type, fields = fields }
+    return { a = "instance", trait = trait, type = type, fields = fields }
 end
 
 -- enum ::= 'enum' type_def '{' enum_field, '}'
@@ -273,7 +273,7 @@ end
 function ctx:parse_typedef_header()
     if not self:match("word", "type") then
         return self:err(
-            "expected 'fn', 'struct', 'enum', 'class', 'instance', or 'import'"
+            "expected 'fn', 'struct', 'enum', 'trait', 'instance', or 'import'"
         )
     end
     self:next()
