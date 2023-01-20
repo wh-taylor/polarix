@@ -32,7 +32,7 @@ function ctx:parse_import()
     if err ~= nil then return nil, err end
     if not self:match("op", ";") then return self:err("expected ';'") end
     self:next()
-    return { a = "import", imported = imported }
+    return { _title = "import", imported = imported }
 end
 
 -- trait ::= 'trait' mocktype '{' ((function_header | type_header) ';'), '}'
@@ -44,7 +44,7 @@ function ctx:parse_trait()
 
     if self:match("op", ";") then
         self:next()
-        return { a = "trait", trait = trait }
+        return { _title = "trait", trait = trait }
     end
 
     if not self:match("op", "{") then
@@ -69,7 +69,7 @@ function ctx:parse_trait()
         self:next()
     end
     self:next()
-    return { a = "trait", trait = trait, fields = fields }
+    return { _title = "trait", trait = trait, fields = fields }
 end
 
 -- instance ::= 'instance' mocktype type '{' (function | typedef)* '}'
@@ -83,7 +83,7 @@ function ctx:parse_instance()
 
     if self:match("op", ";") then
         self:next()
-        return { a = "instance", trait = trait, type = type }
+        return { _title = "instance", trait = trait, type = type }
     end
 
     if not self:match("op", "{") then
@@ -106,7 +106,7 @@ function ctx:parse_instance()
         table.insert(fields, field)
     end
     self:next()
-    return { a = "instance", trait = trait, type = type, fields = fields }
+    return { _title = "instance", trait = trait, type = type, fields = fields }
 end
 
 -- enum ::= 'enum' type_def '{' enum_field, '}'
@@ -129,7 +129,7 @@ function ctx:parse_enum()
     self:next()
     if #fields == 0 then
         return self:err("expected at least one enum field") end
-    return { a = "enum", mocktype = mocktype, fields = fields }
+    return { _title = "enum", mocktype = mocktype, fields = fields }
 end
 
 -- enum_field ::= IDENTIFIER ('(' type, ')')?
@@ -148,7 +148,7 @@ function ctx:parse_enum_field()
         self:next()
         if #types == 0 then return self:err("expected type") end
     end
-    return { a = "enum_field", name = name, types = types }
+    return { _title = "enum_field", name = name, types = types }
 end
 
 -- struct ::= 'struct' mocktype ('{' field, '}' | ';')
@@ -160,7 +160,7 @@ function ctx:parse_struct()
 
     if self:match("op", ";") then
         self:next()
-        return { a = "struct", mocktype = mocktype }
+        return { _title = "struct", mocktype = mocktype }
     end
 
     if not self:match("op", "{") then
@@ -176,7 +176,7 @@ function ctx:parse_struct()
         if self:match("op", ",") then self:next() end
     end
     self:next()
-    return { a = "struct", mocktype = mocktype, fields = fields }
+    return { _title = "struct", mocktype = mocktype, fields = fields }
 end
 
 -- mocktype ::= IDENTIFIER ('<' IDENTIFIER, '>')?
@@ -194,7 +194,7 @@ function ctx:parse_mocktype()
         end
         self:next()
     end
-    return { a = "mocktype", name = name, subtypes = subtypes }
+    return { _title = "mocktype", name = name, subtypes = subtypes }
 end
 
 -- function ::= function_header (block | '=' expr ';')
@@ -209,12 +209,12 @@ function ctx:parse_function()
         self:next()
         local expr, err = self:parse_expr()
         if err ~= nil then return nil, err end
-        block = { a = "block", statements = {}, expr = expr }
+        block = { _title = "block", statements = {}, expr = expr }
         if not self:match("op", ";") then return self:err("expected ';'") end
         self:next()
     end
     return {
-        a = "function",
+        _title = "function",
         name = function_header.name,
         parameters = function_header.parameters,
         returntype = function_header.returntype,
@@ -243,14 +243,14 @@ function ctx:parse_function_header()
     end
     self:next()
 
-    local returntype = { a = "type", name = "void", subtypes = {} }
+    local returntype = { _title = "type", name = "void", subtypes = {} }
     if self:match("op", ":") then
         returntype, err = self:parse_type_affix()
         if err ~= nil then return nil, err end
     end
 
     return {
-        a = "function_header",
+        _title = "function_header",
         name = name,
         parameters = parameters,
         returntype = returntype,
@@ -267,7 +267,7 @@ function ctx:parse_typedef()
     if err ~= nil then return nil, err end
     if not self:match("op", ";") then return self:err("expected ';'") end
     self:next()
-    return { a = "typedef", type = typedef_header, definition = definition }
+    return { _title = "typedef", type = typedef_header, definition = definition }
 end
 
 function ctx:parse_typedef_header()
@@ -279,7 +279,7 @@ function ctx:parse_typedef_header()
     self:next()
     local type, err = self:parse_identifier()
     if err ~= nil then return nil, err end
-    return { a = "typedef_header", type = type }
+    return { _title = "typedef_header", type = type }
 end
 
 -- field ::= IDENTIFIER type_affix
@@ -328,7 +328,7 @@ function ctx:parse_block()
         end
     end
     self:next()
-    return { a = "block", statements = statements, expr = expr }
+    return { _title = "block", statements = statements, expr = expr }
 end
 
 -- statement ::= assert
@@ -355,7 +355,12 @@ function ctx:parse_for()
     if err ~= nil then return nil, err end
     local block, err = self:parse_block()
     if err ~= nil then return nil, err end
-    return { a = "for", lvalue = lvalue, iterable = iterable, block = block }
+    return {
+        _title = "for",
+        lvalue = lvalue,
+        iterable = iterable,
+        block = block
+    }
 end
 
 -- if ::= 'if' expr block ('else' 'if' expr block)* ('else' block)?
@@ -377,7 +382,7 @@ function ctx:parse_if()
         if err ~= nil then return nil, err end
     end
     return {
-        a = "if",
+        _title = "if",
         condition = condition,
         block = block,
         elseblock = elseblock
@@ -392,7 +397,7 @@ function ctx:parse_while()
     if err ~= nil then return nil, err end
     local block, err = self:parse_block()
     if err ~= nil then return nil, err end
-    return { a = "while", condition = condition, block = block }
+    return { _title = "while", condition = condition, block = block }
 end
 
 -- loop ::= 'loop' block
@@ -401,7 +406,7 @@ function ctx:parse_loop()
     self:next()
     local block, err = self:parse_block()
     if err ~= nil then return nil, err end
-    return { a = "loop", block = block }
+    return { _title = "loop", block = block }
 end
 
 -- assert ::= 'assert' expr (',' expr)?
@@ -416,14 +421,14 @@ function ctx:parse_assert()
         result, err = self:parse_expr()
         if err ~= nil then return nil, err end
     end
-    return { a = "assert", expr = expr, result = result }
+    return { _title = "assert", expr = expr, result = result }
 end
 
 -- continue ::= 'continue'
 function ctx:parse_continue()
     if not self:match("word", "continue") then return self:parse_break() end
     self:next()
-    return { a = "continue" }
+    return { _title = "continue" }
 end
 
 -- break ::= 'break' expr?
@@ -432,7 +437,7 @@ function ctx:parse_break()
     self:next()
     local expr, err = self:parse_expr()
     if err ~= nil then return nil, err end
-    return { a = "break", expr = expr }
+    return { _title = "break", expr = expr }
 end
 
 -- return ::= 'return' expr?
@@ -441,7 +446,7 @@ function ctx:parse_return()
     self:next()
     local expr, err = self:parse_expr()
     if err ~= nil then return nil, err end
-    return { a = "return", expr = expr }
+    return { _title = "return", expr = expr }
 end
 
 -- initialize ::= ('let' | 'const') destructure '=' expr
@@ -461,7 +466,7 @@ function ctx:parse_initialize()
     self:next()
     local expr, err = self:parse_expr()
     if err ~= nil then return nil, err end
-    return { a = word, lvalue = lvalue, type = type, expr = expr }
+    return { _title = word, lvalue = lvalue, type = type, expr = expr }
 end
 
 -- assign ::= id ('=' | '+=' | '-=' | '*=' | '/=' | '%=' | '^=' ) expr
@@ -477,7 +482,7 @@ function ctx:parse_assign()
     self:next()
     local expr, err = self:parse_expr()
     if err ~= nil then return nil, err end
-    return { a = op, id = variable, expr = expr }
+    return { _title = op, id = variable, expr = expr }
 end
 
 -- destructure ::= '(' (IDENTIFIER | destructure), ')'
@@ -507,7 +512,7 @@ function ctx:parse_type()
         if err ~= nil then return nil, err end
         if not self:match("op", "]") then return self:err("expected ']'") end
         self:next()
-        return { a = "type", name = "Array", subtypes = { type } }
+        return { _title = "type", name = "Array", subtypes = { type } }
     end
     if self:current_token().label ~= "word" then
         return self:err("expected identifier") end
@@ -524,7 +529,7 @@ function ctx:parse_type()
         end
         self:next()
     end
-    return { a = "type", name = name, subtypes = subtypes }
+    return { _title = "type", name = name, subtypes = subtypes }
 end
 
 -- closure :: '|' (IDENTIFIER ':' type)* '|' expr
@@ -552,7 +557,7 @@ function ctx:parse_closure()
     self:next()
     local expr, err = self:parse_expr()
     if err ~= nil then return nil, err end
-    return { a = "closure", parameters = parameters, expr = expr }
+    return { _title = "closure", parameters = parameters, expr = expr }
 end
 
 -- try ::= 'try' expr
@@ -561,7 +566,7 @@ function ctx:parse_try_expr()
     self:next()
     local expression, err = self:parse_expr()
     if err ~= nil then return nil, err end
-    return { a = "try", expr = expression }
+    return { _title = "try", expr = expression }
 end
 
 -- catch ::= expr 'catch' expr
@@ -572,7 +577,7 @@ function ctx:parse_catch_expr()
         self:next()
         local right, err = self:parse_or_expr()
         if err ~= nil then return nil, err end
-        left = { a = "catch", expr = left, result = right }
+        left = { _title = "catch", expr = left, result = right }
     end
     return left
 end
@@ -585,7 +590,7 @@ function ctx:parse_or_expr()
         self:next()
         local right, err = self:parse_and_expr()
         if err ~= nil then return nil, err end
-        left = { a = "or", left = left, right = right }
+        left = { _title = "or", left = left, right = right }
     end
     return left
 end
@@ -598,7 +603,7 @@ function ctx:parse_and_expr()
         self:next()
         local right, err = self:parse_not_expr()
         if err ~= nil then return nil, err end
-        left = { a = "and", left = left, right = right }
+        left = { _title = "and", left = left, right = right }
     end
     return left
 end
@@ -609,7 +614,7 @@ function ctx:parse_not_expr()
     self:next()
     local expression, err = self:parse_not_expr()
     if err ~= nil then return nil, err end
-    return { a = "not", value = expression }
+    return { _title = "not", value = expression }
 end
 
 -- cmp_expr ::= add_expr (('==' | '!=' | '>' | '<' | '>=' | '<=') add_expr)*
@@ -624,7 +629,7 @@ function ctx:parse_cmp_expr()
         self:next()
         local right, err = self:parse_add_expr()
         if err ~= nil then return nil, err end
-        left = { a = operator, left = left, right = right }
+        left = { _title = operator, left = left, right = right }
     end
     return left
 end
@@ -640,7 +645,7 @@ function ctx:parse_add_expr()
         self:next()
         local right, err = self:parse_mult_expr()
         if err ~= nil then return nil, err end
-        left = { a = operator, left = left, right = right }
+        left = { _title = operator, left = left, right = right }
     end
     return left
 end
@@ -657,7 +662,7 @@ function ctx:parse_mult_expr()
         self:next()
         local right, err = self:parse_exp_expr()
         if err ~= nil then return nil, err end
-        left = { a = operator, left = left, right = right }
+        left = { _title = operator, left = left, right = right }
     end
     return left
 end
@@ -670,7 +675,7 @@ function ctx:parse_exp_expr()
         self:next()
         local right, err = self:parse_exp_expr()
         if err ~= nil then return nil, err end
-        left = { a = "exp", left = left, right = right }
+        left = { _title = "exp", left = left, right = right }
     end
     return left
 end
@@ -681,7 +686,7 @@ function ctx:parse_neg_expr()
     self:next()
     local expression, err = self:parse_neg_expr()
     if err ~= nil then return nil, err end
-    return { a = "neg", value = expression }
+    return { _title = "neg", value = expression }
 end
 
 -- dot ::= (call_index | dot) '.' call_index
@@ -692,7 +697,7 @@ function ctx:parse_dot()
         self:next()
         local postdot, err = self:parse_call_index()
         if err ~= nil then return nil, err end
-        source = { a = "dot", source = source, postdot = postdot }
+        source = { _title = "dot", source = source, postdot = postdot }
     end
     return source
 end
@@ -706,7 +711,7 @@ function ctx:parse_call_index()
             local items, err = self:parse_comma_brackets(")")
             if err ~= nil then return nil, err end
             self:next()
-            called = { a = "call", called = called, args = items }
+            called = { _title = "call", called = called, args = items }
         elseif self:match("op", "[") then
             self:next()
             local expression, err = self:parse_expr()
@@ -714,7 +719,7 @@ function ctx:parse_call_index()
             if not self:match("op", "]") then
                 return ctx:err("expected ']'") end
             self:next()
-            called = { a = "index", indexed = called, arg = expression }
+            called = { _title = "index", indexed = called, arg = expression }
         end
     end
     return called
@@ -733,7 +738,7 @@ function ctx:parse_scoper()
         self:next()
         local member, err = self:parse_scoper()
         if err ~= nil then return nil, err end
-        scope = { a = "scoper", scope = scope, member = member }
+        scope = { _title = "scoper", scope = scope, member = member }
     end
     return scope
 end
@@ -747,19 +752,19 @@ function ctx:parse_atom()
     if self:current_token().label == "num" then
         local name = self:current_token().value
         self:next()
-        return { a = "num", num = name }
+        return { _title = "num", num = name }
     end
 
     if self:current_token().label == "str" then
         local name = self:current_token().value
         self:next()
-        return { a = "str", str = name }
+        return { _title = "str", str = name }
     end
 
     if self:current_token().label == "char" then
         local name = self:current_token().value
         self:next()
-        return { a = "char", char = name }
+        return { _title = "char", char = name }
     end
 
     return self:parse_parentheses()
@@ -770,7 +775,7 @@ function ctx:parse_identifier()
         return self:err("expected identifier") end
     local name = self:current_token().value
     self:next()
-    return { a = "id", id = name }
+    return { _title = "id", id = name }
 end
 
 -- parentheses ::= '(' expr ')' | array
@@ -789,7 +794,7 @@ function ctx:parse_array()
     if not self:match("op", '[') then return self:parse_expr() end
     local items = ctx:parse_comma_brackets("]")
     self:next()
-    return { a = "array", items = items }
+    return { _title = "array", items = items }
 end
 
 -- Auxiliary contextual functions

@@ -6,7 +6,7 @@ local ctx = {}
 
 local function maketype(name, subtypes)
     if subtypes == nil then subtypes = {} end
-    return { a = "type", name = name, subtypes = subtypes }
+    return { _title = "type", name = name, subtypes = subtypes }
 end
 
 local function types_match(type1, type2)
