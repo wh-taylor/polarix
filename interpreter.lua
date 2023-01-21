@@ -10,7 +10,7 @@ local function maketype(name, subtypes)
 end
 
 local function types_match(type1, type2)
-    if type1.a ~= type2.a then return false end
+    if type1._title ~= type2._title then return false end
     if type1.name ~= type2.name then return false end
     if #type1.subtypes ~= #type2.subtypes then return false end
     for i = 1, #type1.subtypes do
@@ -54,7 +54,7 @@ function interpreter.interpret(tree)
 
     ctx:scope_in()
     for i = 1, #tree do
-        if tree[i].a == "enum" then
+        if tree[i]._title == "enum" then
             table.insert(ctx.types, tree[i].mocktype)
             ctx.namespaces[tree[i].mocktype.name.id] = {}
             for j = 1, #tree[i].fields do
@@ -64,7 +64,7 @@ function interpreter.interpret(tree)
             end
         end
 
-        if tree[i].a == "function" then
+        if tree[i]._title == "function" then
             local paramtypes = {}
             for j = 1, #tree[i].parameters do
                 table.insert(paramtypes, tree[i].parameters[j].type)
@@ -76,7 +76,7 @@ function interpreter.interpret(tree)
     end
 
     for i = 1, #tree do
-        if tree[i].a == "function" and tree[i].name.id == "main" then
+        if tree[i]._title == "function" and tree[i].name.id == "main" then
             local value, err = ctx:walk_function(tree[i], {})
             if err then return nil, err end
             -- for testing purposes
@@ -127,7 +127,7 @@ function ctx:walk_statement(node)
 end
 
 function ctx:walk_let(node)
-    if node.a ~= "let" then return self:walk_expr(node) end
+    if node._title ~= "let" then return self:walk_expr(node) end
     local expr = self:walk_expr(node.expr)
     self:new_variable(node.lvalue.id, expr.value, expr.type)
 end
@@ -137,7 +137,7 @@ function ctx:walk_expr(node)
 end
 
 function ctx:walk_closure(node)
-    if node.a ~= "closure" then return self:walk_try(node) end
+    if node._title ~= "closure" then return self:walk_try(node) end
     local paramtypes = {}
     for i = 1, #node.parameters do
         table.insert(paramtypes, node.parameters[i].type)
@@ -146,132 +146,132 @@ function ctx:walk_closure(node)
 end
 
 function ctx:walk_try(node)
-    if node.a ~= "try" then return self:walk_catch(node) end
+    if node._title ~= "try" then return self:walk_catch(node) end
     -- need to implement Result first
     return nil
 end
 
 function ctx:walk_catch(node)
-    if node.a ~= "catch" then return self:walk_or(node) end
+    if node._title ~= "catch" then return self:walk_or(node) end
     -- need to implement Result first
     return nil
 end
 
 function ctx:walk_or(node)
-    if node.a ~= "or" then return self:walk_and(node) end
+    if node._title ~= "or" then return self:walk_and(node) end
     local left = self:walk_expr(node.left)
     local right = self:walk_expr(node.right)
     return self:value(left.value or right.value, maketype("boolean"))
 end
 
 function ctx:walk_and(node)
-    if node.a ~= "and" then return self:walk_not(node) end
+    if node._title ~= "and" then return self:walk_not(node) end
     local left = self:walk_expr(node.left)
     local right = self:walk_expr(node.right)
     return self:value(left.value and right.value, maketype("boolean"))
 end
 
 function ctx:walk_not(node)
-    if node.a ~= "not" then return self:walk_gt(node) end
+    if node._title ~= "not" then return self:walk_gt(node) end
     local value = self:walk_expr(node.value)
     return self:value(not value.value, maketype("boolean"))
 end
 
 function ctx:walk_gt(node)
-    if node.a ~= "gt" then return self:walk_lt(node) end
+    if node._title ~= "gt" then return self:walk_lt(node) end
     local left = self:walk_expr(node.left)
     local right = self:walk_expr(node.right)
     return self:value(left.value > right.value, maketype("boolean"))
 end
 
 function ctx:walk_lt(node)
-    if node.a ~= "lt" then return self:walk_gteq(node) end
+    if node._title ~= "lt" then return self:walk_gteq(node) end
     local left = self:walk_expr(node.left)
     local right = self:walk_expr(node.right)
     return self:value(left.value < right.value, maketype("boolean"))
 end
 
 function ctx:walk_gteq(node)
-    if node.a ~= "gteq" then return self:walk_lteq(node) end
+    if node._title ~= "gteq" then return self:walk_lteq(node) end
     local left = self:walk_expr(node.left)
     local right = self:walk_expr(node.right)
     return self:value(left.value >= right.value, maketype("boolean"))
 end
 
 function ctx:walk_lteq(node)
-    if node.a ~= "lteq" then return self:walk_eq(node) end
+    if node._title ~= "lteq" then return self:walk_eq(node) end
     local left = self:walk_expr(node.left)
     local right = self:walk_expr(node.right)
     return self:value(left.value <= right.value, maketype("boolean"))
 end
 
 function ctx:walk_eq(node)
-    if node.a ~= "eq" then return self:walk_neq(node) end
+    if node._title ~= "eq" then return self:walk_neq(node) end
     local left = self:walk_expr(node.left)
     local right = self:walk_expr(node.right)
     return self:value(left.value == right.value, maketype("boolean"))
 end
 
 function ctx:walk_neq(node)
-    if node.a ~= "neq" then return self:walk_mod(node) end
+    if node._title ~= "neq" then return self:walk_mod(node) end
     local left = self:walk_expr(node.left)
     local right = self:walk_expr(node.right)
     return self:value(left.value ~= right.value, maketype("boolean"))
 end
 
 function ctx:walk_mod(node)
-    if node.a ~= "mod" then return self:walk_div(node) end
+    if node._title ~= "mod" then return self:walk_div(node) end
     local left = self:walk_expr(node.left)
     local right = self:walk_expr(node.right)
     return self:value(math.fmod(left.value, right.value), left.type)
 end
 
 function ctx:walk_div(node)
-    if node.a ~= "div" then return self:walk_mult(node) end
+    if node._title ~= "div" then return self:walk_mult(node) end
     local left = self:walk_expr(node.left)
     local right = self:walk_expr(node.right)
     return self:value(left.value / right.value, left.type)
 end
 
 function ctx:walk_mult(node)
-    if node.a ~= "mult" then return self:walk_sub(node) end
+    if node._title ~= "mult" then return self:walk_sub(node) end
     local left = self:walk_expr(node.left)
     local right = self:walk_expr(node.right)
     return self:value(left.value * right.value, left.type)
 end
 
 function ctx:walk_sub(node)
-    if node.a ~= "sub" then return self:walk_add(node) end
+    if node._title ~= "sub" then return self:walk_add(node) end
     local left = self:walk_expr(node.left)
     local right = self:walk_expr(node.right)
     return self:value(left.value - right.value, left.type)
 end
 
 function ctx:walk_add(node)
-    if node.a ~= "add" then return self:walk_exp(node) end
+    if node._title ~= "add" then return self:walk_exp(node) end
     local left = self:walk_expr(node.left)
     local right = self:walk_expr(node.right)
     return self:value(left.value + right.value, left.type)
 end
 
 function ctx:walk_exp(node)
-    if node.a ~= "exp" then return self:walk_neg(node) end
+    if node._title ~= "exp" then return self:walk_neg(node) end
     local left = self:walk_expr(node.left)
     local right = self:walk_expr(node.right)
     return self:value(left.value ^ right.value, left.type)
 end
 
 function ctx:walk_neg(node)
-    if node.a ~= "neg" then return self:walk_scoper(node) end
+    if node._title ~= "neg" then return self:walk_scoper(node) end
     local value = self:walk_expr(node.value)
     return self:value(-value.value, value.type)
 end
 
 function ctx:walk_scoper(node)
-    if node.a ~= "scoper" then return self:walk_call(node) end
+    if node._title ~= "scoper" then return self:walk_call(node) end
     -- NEEDS TESTING
     local function scoper(node, scope)
-        if node.member.a == "scoper" then
+        if node.member._title == "scoper" then
             return scoper(node.member, scope[node.scope.id])
         end
         return scope[node.member.id]
@@ -281,7 +281,7 @@ function ctx:walk_scoper(node)
 end
 
 function ctx:walk_call(node)
-    if node.a ~= "call" then return self:walk_index(node) end
+    if node._title ~= "call" then return self:walk_index(node) end
     local called, err = self:walk_expr(node.called)
     if called.type.name == "Fn" then
         return self:walk_function(called.value, node.args) end
@@ -290,13 +290,13 @@ function ctx:walk_call(node)
 end
 
 function ctx:walk_index(node)
-    if node.a ~= "index" then return self:walk_bool(node) end
+    if node._title ~= "index" then return self:walk_bool(node) end
     local indexed, err = self:walk_expr(node.indexed)
     return indexed.value[tonumber(self:walk_expr(node.arg).value)]
 end
 
 function ctx:walk_bool(node)
-    if not node.a == "id" then return self:walk_var(node) end
+    if not node._title == "id" then return self:walk_var(node) end
     if node.id == "true" then
         return self:value(true, maketype("boolean")) end
     if node.id == "false" then
@@ -305,29 +305,29 @@ function ctx:walk_bool(node)
 end
 
 function ctx:walk_var(node)
-    if node.a ~= "id" then return self:walk_num(node) end
+    if node._title ~= "id" then return self:walk_num(node) end
     local var, err = self:get_var(node.id)
     if err then return nil, err end
     return self:value(var.value, var.type)
 end
 
 function ctx:walk_num(node)
-    if node.a ~= "num" then return self:walk_string(node) end
+    if node._title ~= "num" then return self:walk_string(node) end
     return self:value(tonumber(node.num), maketype("Num"))
 end
 
 function ctx:walk_string(node)
-    if node.a ~= "str" then return self:walk_char(node) end
+    if node._title ~= "str" then return self:walk_char(node) end
     return self:value(node.str, maketype("String"))
 end
 
 function ctx:walk_char(node)
-    if node.a ~= "char" then return self:walk_array(node) end
+    if node._title ~= "char" then return self:walk_array(node) end
     return self:value(node.char, maketype("char"))
 end
 
 function ctx:walk_array(node)
-    if node.a ~= "array" then return nil end
+    if node._title ~= "array" then return nil end
     local elements = {}
     local type
     for i = 1, #node.items do
