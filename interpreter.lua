@@ -94,9 +94,24 @@ function interpreter.interpret(tree)
             table.insert(ctx.types, statement.mocktype)
             ctx.namespaces[statement.mocktype.name.id] = {}
             for _, field in ipairs(statement.fields) do
-                ctx.namespaces
-                    [statement.mocktype.name.id]
-                    [field.name.id] = field
+                if #field.types > 0 then
+                    ctx.namespaces
+                        [statement.mocktype.name.id]
+                        [field.name.id] = {
+                            _title = "enum_constructor",
+                            mocktype = field.mocktype,
+                            name = field.name,
+                            types = field.types,
+                        }
+                else
+                    ctx.namespaces
+                        [statement.mocktype.name.id]
+                        [field.name.id] = {
+                            _title = "enum_field",
+                            mocktype = field.mocktype,
+                            name = field.name,
+                        }
+                end
             end
         end
 
