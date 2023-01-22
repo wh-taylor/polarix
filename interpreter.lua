@@ -353,6 +353,7 @@ end
 function ctx:walk_call(node)
     if node._title ~= "call" then return self:walk_index(node) end
     local called, err = self:walk_expr(node.called)
+    if err ~= nil then return nil, err end
     if called.type.name == "fn" then
         return self:walk_function(called.value, node.args) end
     if called.type.name == "closure" then
