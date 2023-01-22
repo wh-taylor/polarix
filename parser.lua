@@ -819,7 +819,7 @@ function ctx:parse_constructor()
         if self:match("op", ",") then self:next() end
     end
     self:next()
-    return { _title = "constructor", fields = fields }
+    return { _title = "constructor", struct = struct_name, fields = fields }
 end
 
 function ctx:parse_identifier()
