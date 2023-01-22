@@ -318,15 +318,8 @@ end
 
 function ctx:walk_scoper(node)
     if node._title ~= "scoper" then return self:walk_call(node) end
-    -- NEEDS TESTING
-    local function scoper(node, scope)
-        if node.member._title == "scoper" then
-            return scoper(node.member, scope[node.scope.id])
-        end
-        return scope[node.member.id]
-    end
-
-    return self:walk_expr(scoper(node, self.namespaces[node.scope.id]))
+    -- expand for multi-level scopes
+    return self:walk_expr(self.namespaces[node.scope.id][node.member.id])
 end
 
 function ctx:walk_call(node)
@@ -336,12 +329,27 @@ function ctx:walk_call(node)
         return self:walk_function(called.value, node.args) end
     if called.type.name == "closure" then
         return self:walk_closure_call(called.value, node.args) end
+    -- interpret enum field call
+    local args = {}
+    local types = {}
+    for _, argument in ipairs(node.args) do
+        local walked = self:walk_expr(argument)
+        table.insert(args, walked)
+        table.insert(types, walked.type)
+    end
+    return self:value({ called.value[1], table.unpack(args) },
+        maketype(called.type.name, types))
 end
 
 function ctx:walk_index(node)
-    if node._title ~= "index" then return self:walk_bool(node) end
+    if node._title ~= "index" then return self:walk_enum_field(node) end
     local indexed, err = self:walk_expr(node.indexed)
     return indexed.value[tonumber(self:walk_expr(node.arg).value)]
+end
+
+function ctx:walk_enum_field(node)
+    if node._title ~= "enum_field" then return self:walk_bool(node) end
+    return self:value({ node.name.id }, maketype(node.enum.name.id))
 end
 
 function ctx:walk_bool(node)
