@@ -125,7 +125,7 @@ function interpreter.interpret(tree)
             if err then return nil, err end
             -- for testing purposes
             if value then
-                print(value.value)
+                print(inspect(value.value))
             else
                 print("No output value")
             end
