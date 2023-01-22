@@ -364,6 +364,7 @@ function ctx:walk_call(node)
         return self:walk_closure_call(called.value, node.args) end
     if called.value._title == "enum_constructor" then
         return self:walk_enum_constructor_call(called, node.args) end
+    return nil, "value cannot be called"
 end
 
 function ctx:walk_index(node)
