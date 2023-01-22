@@ -9,6 +9,11 @@ local function maketype(name, subtypes)
     return { _title = "type", name = name, subtypes = subtypes }
 end
 
+local function makemocktype(name, subtypes)
+    if subtypes == nil then subtypes = {} end
+    return { _title = "mocktype", name = name, subtypes = subtypes }
+end
+
 local function types_match(type1, type2)
     if type1._title ~= type2._title then return false end
     if type1.name ~= type2.name then return false end
@@ -18,6 +23,11 @@ local function types_match(type1, type2)
             return false
         end
     end
+    return true
+end
+
+local function fits_mocktype(type, mocktype)
+    if type.name ~= mocktype.name then return false end
     return true
 end
 
@@ -67,6 +77,14 @@ function interpreter.interpret(tree)
         if tree[i]._title == "function" then
             local paramtypes = {}
             for j = 1, #tree[i].parameters do
+                local has_type = false
+                for _, type in ipairs(ctx.types) do
+                    if fits_mocktype(tree[i].parameters[j].type, type) then
+                        has_type = true
+                        break
+                    end
+                end
+                if not has_type then return nil, "type does not exist" end
                 table.insert(paramtypes, tree[i].parameters[j].type)
             end
             table.insert(paramtypes, tree[i].returntype)
