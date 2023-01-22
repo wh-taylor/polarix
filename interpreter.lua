@@ -152,6 +152,10 @@ end
 
 function ctx:walk_enum_constructor_call(node, parameters)
     node.value.args = {}
+    if #parameters < #node.value.types then
+        return nil, "enum constructor has too few arguments" end
+    if #parameters > #node.value.types then
+        return nil, "enum constructor has too many arguments" end
     for i, param in ipairs(parameters) do
         local expr, err = self:walk_expr(param)
         if err ~= nil then return nil, err end
