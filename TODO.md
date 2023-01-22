@@ -7,6 +7,7 @@
 - [ ] Interpret block statements (for, if, while, loop)
 - [ ] Enums
 - [ ] Structs
+- [ ] Generics
 - [ ] Implement modules
 - [ ] Type check everything
 - [ ] Prohibit keywords as identifiers
