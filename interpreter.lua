@@ -362,9 +362,15 @@ function ctx:walk_index(node)
     return indexed.value[tonumber(self:walk_expr(node.arg).value)]
 end
 
+function ctx:walk_enum_constructor(node)
+    if node._title ~= "enum_constructor" then
+        return self:walk_enum_field(node) end
+    return self:value(node, maketype(node.mocktype.name.id))
+end
+
 function ctx:walk_enum_field(node)
     if node._title ~= "enum_field" then return self:walk_bool(node) end
-    return self:value({ node.name.id }, maketype(node.mocktype.name.id))
+    return self:value(node, maketype(node.mocktype.name.id))
 end
 
 function ctx:walk_bool(node)
