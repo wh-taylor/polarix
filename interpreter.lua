@@ -366,9 +366,15 @@ end
 
 function ctx:walk_dot(node)
     if node._title ~= "dot" then return self:walk_scoper(node) end
+    if node.postdot._title == "call" then -- dot function chain
+        node.postdot.args = { node.source, table.unpack(node.postdot.args) }
+        local called, err = self:walk_call(node.postdot)
+        if err ~= nil then return nil, err end
+        return called
+    end
     local source, err = self:walk_expr(node.source)
     if err ~= nil then return nil, err end
-    if source.value.fields then -- struct accessing
+    if source.value and source.value.fields then -- struct accessing
         return source.value.fields[node.postdot.id]
     end
     return nil, "misuse of dot operator"
