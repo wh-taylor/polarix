@@ -357,7 +357,7 @@ function ctx:walk_call(node)
 end
 
 function ctx:walk_index(node)
-    if node._title ~= "index" then return self:walk_enum_field(node) end
+    if node._title ~= "index" then return self:walk_enum_constructor(node) end
     local indexed, err = self:walk_expr(node.indexed)
     return indexed.value[tonumber(self:walk_expr(node.arg).value)]
 end
