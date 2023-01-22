@@ -770,7 +770,7 @@ end
 -- atom ::= IDENTIFIER | NUMBER | STRING | CHAR | parentheses
 function ctx:parse_atom()
     if self:current_token().label == "word" then
-        return self:parse_identifier()
+        return self:parse_constructor()
     end
 
     if self:current_token().label == "num" then
@@ -792,6 +792,35 @@ function ctx:parse_atom()
     end
 
     return self:parse_parentheses()
+end
+
+function ctx:parse_constructor()
+    local struct_name, err = self:parse_identifier()
+    if err ~= nil then return nil, err end
+    if not self:match("op", "{") then
+        self.index = self.index - 1
+        return self:parse_identifier()
+    end
+    self:next()
+    local fields = {}
+    while not self:match("op", "}") do
+        local field_name, err = self:parse_identifier()
+        if err ~= nil then return nil, err end
+        if self:match("op", ":") then
+            self:next()
+            local field_value, err = self:parse_expr()
+            if err ~= nil then return nil, err end
+            table.insert(fields, { name = field_name, value = field_value })
+        else
+            table.insert(fields, { name = field_name, value = field_name })
+            self:next()
+        end
+        if not (self:match("op", ",") or self:match("op", "}")) then
+            return nil, self:err("expected ',' or '}'") end
+        if self:match("op", ",") then self:next() end
+    end
+    self:next()
+    return { _title = "constructor", fields = fields }
 end
 
 function ctx:parse_identifier()
