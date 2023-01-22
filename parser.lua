@@ -287,7 +287,11 @@ function ctx:parse_typedef()
     if err ~= nil then return nil, err end
     if not self:match("op", ";") then return self:err("expected ';'") end
     self:next()
-    return { _title = "typedef", type = typedef_header, definition = definition }
+    return {
+        _title = "typedef",
+        type = typedef_header,
+        definition = definition
+    }
 end
 
 function ctx:parse_typedef_header()
