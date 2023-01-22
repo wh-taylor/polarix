@@ -117,6 +117,12 @@ function interpreter.interpret(tree)
             end
         end
 
+        if statement._title == "struct" then
+            local _, err = ctx:new_variable(statement.mocktype.name.id,
+                statement)
+            if err ~= nil then return nil, err end
+        end
+
         if statement._title == "function" then
             local paramtypes = {}
             for _, parameter in ipairs(statement.parameters) do
