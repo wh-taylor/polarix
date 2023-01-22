@@ -183,18 +183,24 @@ end
 function ctx:parse_mocktype()
     local name, err = self:parse_identifier()
     if err ~= nil then return nil, err end
-    local subtypes = {}
+    local subtraits = {}
     if self:match("op", "<") then
         self:next()
         while not self:match("op", ">") do
-            table.insert(subtypes, self:parse_identifier())
+            if self:match("op", ":") then
+                local trait, err = self:parse_mocktype()
+                if err ~= nil then return nil, err end
+                table.insert(subtraits, trait)
+            else
+                table.insert(subtraits, {})
+            end
             if not (self:match("op", ">") or self:match("op", ",")) then
                 return self:err("expected '>' or ','") end
             if self:match("op", ",") then self:next() end
         end
         self:next()
     end
-    return { _title = "mocktype", name = name, subtypes = subtypes }
+    return { _title = "mocktype", name = name, subtraits = subtraits }
 end
 
 -- function ::= function_header (block | '=' expr ';')

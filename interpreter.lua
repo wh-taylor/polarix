@@ -9,9 +9,9 @@ local function maketype(name, subtypes)
     return { _title = "type", name = name, subtypes = subtypes }
 end
 
-local function makemocktype(name, subtypes)
-    if subtypes == nil then subtypes = {} end
-    return { _title = "mocktype", name = name, subtypes = subtypes }
+local function makemocktype(name, subtraits)
+    if subtraits == nil then subtraits = {} end
+    return { _title = "mocktype", name = name, subtraits = subtraits }
 end
 
 local function types_match(type1, type2)
