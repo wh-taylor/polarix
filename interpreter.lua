@@ -394,8 +394,27 @@ function ctx:walk_enum_constructor(node)
 end
 
 function ctx:walk_enum_field(node)
-    if node._title ~= "enum_field" then return self:walk_bool(node) end
+    if node._title ~= "enum_field" then return self:walk_constructor(node) end
     return self:value(node, maketype(node.mocktype.name.id))
+end
+
+function ctx:walk_constructor(node)
+    if node._title ~= "constructor" then return self:walk_bool(node) end
+    local struct = self:walk_var(node.struct).value
+
+    for i, field in ipairs(node.fields) do
+        if field.name.id ~= struct.fields[i].name.id then
+            return nil, "constructor field name does not match with struct"
+        end
+        local expr, err = self:walk_expr(field.value)
+        if err ~= nil then return nil, err end
+        if not self:types_match(expr.type, struct.fields[i].type) then
+            return nil, "constructor field type does not match with struct"
+        end
+    end
+
+    return self:value({ name = struct.mocktype.name.id, fields = node.fields },
+        maketype(struct.mocktype.name.id))
 end
 
 function ctx:walk_bool(node)
