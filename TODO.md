@@ -9,12 +9,12 @@
 - [ ] Implement dot operator for struct fields
 - [ ] Finish regular statements
 - [ ] Interpret block statements (for, if, while, loop)
-- [ ] Parse struct constructor
-- [ ] Structs
 - [ ] Generics
 - [ ] Implement modules
 - [ ] Type check operators
 - [ ] Prohibit keywords as identifiers
+- [x] Parse struct constructor
+- [x] Structs
 - [x] Type check functions
 - [x] Enums
 - [x] Implement calling closures
