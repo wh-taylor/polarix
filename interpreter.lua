@@ -107,6 +107,11 @@ function ctx:walk_function(node, parameters)
     self:scope_in()
     for i = 1, #parameters do
         local param = self:walk_expr(parameters[i])
+        -- check if parameter type matches argument type
+        if node.parameters[i].type ~= param.type then
+            return nil, "parameter and argument types do not match"
+        end
+        -- load parameter to locals
         self:new_variable(node.parameters[i].name.id, param.value, param.type)
     end
 
