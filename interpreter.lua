@@ -152,7 +152,7 @@ function ctx:walk_function(node, parameters)
     for i = 1, #parameters do
         local param = self:walk_expr(parameters[i])
         -- check if parameter type matches argument type
-        if not types_match(node.parameters[i].type, param.type) then
+        if not types_match(param.type, node.parameters[i].type) then
             return nil, "parameter and argument types do not match"
         end
         -- load parameter to locals
