@@ -1,11 +1,15 @@
 # TODO
 
 - [ ] Add REPL
-- [ ] Improve runtime errors
+- [ ] Improve interpreter errors
 - [ ] Implement traits and instances
-- [ ] Solve number literal issue
+- [ ] Allow number literals to be any type
+- [ ] Type casting
+- [ ] Implement dot operator for function chaining
+- [ ] Implement dot operator for struct fields
 - [ ] Finish regular statements
 - [ ] Interpret block statements (for, if, while, loop)
+- [ ] Parse struct constructor
 - [ ] Structs
 - [ ] Generics
 - [ ] Implement modules
