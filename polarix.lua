@@ -38,7 +38,10 @@ function run(file_name)
     end
     print(inspect(tree))
 
-    interpreter.interpret(tree)
+    local value, err = interpreter.interpret(tree)
+    if err ~= nil then
+        print("polarix: " .. err)
+    end
 end
 
 function main()
