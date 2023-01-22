@@ -225,7 +225,7 @@ function new_context(file_name, code)
         local word = ""
         local ctx = self:copy()
         while self:is_index_valid() do
-            if self:char():match("[%p \n\t\r]") then
+            if self:char():match("[%p \n\t\r]") and self:char() ~= "_" then
                 table.insert(self.tokens, new_token("word", word, ctx))
                 return
             end
