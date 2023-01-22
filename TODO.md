@@ -1,5 +1,6 @@
 # TODO
 
+- [ ] Add REPL
 - [ ] Improve runtime errors
 - [ ] Implement traits and instances
 - [ ] Solve number literal issue
