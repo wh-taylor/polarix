@@ -40,6 +40,8 @@ function ctx:scope_out()
 end
 
 function ctx:new_variable(name, value, type)
+    if ctx.locals[#ctx.locals][name] then
+        return nil, "identifier already in locals" end
     ctx.locals[#ctx.locals][name] = { value = value, type = type }
 end
 
@@ -129,8 +131,9 @@ function interpreter.interpret(tree)
                 table.insert(paramtypes, parameter.type)
             end
             table.insert(paramtypes, statement.returntype)
-            ctx:new_variable(statement.name.id, statement,
+            local _, err = ctx:new_variable(statement.name.id, statement,
                 maketype("fn", paramtypes))
+            if err ~= nil then return nil, err end
         end
     end
 
@@ -170,7 +173,9 @@ function ctx:walk_closure_call(node, parameters)
     self:scope_in()
     for i = 1, #parameters do
         local param = self:walk_expr(parameters[i])
-        self:new_variable(node.parameters[i].name.id, param.value, param.type)
+        local _, err = self:new_variable(node.parameters[i].name.id,
+            param.value, param.type)
+        if err ~= nil then return nil, err end
     end
 
     local value, err = self:walk_expr(node.expr)
@@ -188,7 +193,9 @@ function ctx:walk_function(node, parameters)
             return nil, "parameter and argument types do not match"
         end
         -- load parameter to locals
-        self:new_variable(node.parameters[i].name.id, param.value, param.type)
+        local _, err = self:new_variable(node.parameters[i].name.id,
+            param.value, param.type)
+        if err ~= nil then return nil, err end
     end
 
     local value, err = ctx:walk_block(node.block)
@@ -210,7 +217,8 @@ end
 function ctx:walk_let(node)
     if node._title ~= "let" then return self:walk_expr(node) end
     local expr = self:walk_expr(node.expr)
-    self:new_variable(node.lvalue.id, expr.value, expr.type)
+    local _, err = self:new_variable(node.lvalue.id, expr.value, expr.type)
+    if err ~= nil then return nil, err end
 end
 
 function ctx:walk_expr(node)
