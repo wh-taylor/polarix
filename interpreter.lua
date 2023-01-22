@@ -14,20 +14,20 @@ local function makemocktype(name, subtraits)
     return { _title = "mocktype", name = name, subtraits = subtraits }
 end
 
-local function types_match(type1, type2)
+local function fits_mocktype(type, mocktype)
+    if type.name ~= mocktype.name then return false end
+    return true
+end
+
+function ctx:types_match(type1, type2)
     if type1._title ~= type2._title then return false end
     if type1.name ~= type2.name then return false end
     if #type1.subtypes ~= #type2.subtypes then return false end
     for i = 1, #type1.subtypes do
-        if not types_match(type1.subtypes[i], type2.subtypes[i]) then
+        if not self:types_match(type1.subtypes[i], type2.subtypes[i]) then
             return false
         end
     end
-    return true
-end
-
-local function fits_mocktype(type, mocktype)
-    if type.name ~= mocktype.name then return false end
     return true
 end
 
@@ -152,7 +152,7 @@ function ctx:walk_function(node, parameters)
     for i = 1, #parameters do
         local param = self:walk_expr(parameters[i])
         -- check if parameter type matches argument type
-        if not types_match(param.type, node.parameters[i].type) then
+        if not self:types_match(param.type, node.parameters[i].type) then
             return nil, "parameter and argument types do not match"
         end
         -- load parameter to locals
@@ -390,7 +390,7 @@ function ctx:walk_array(node)
     for i = 1, #node.items do
         local result = self:walk_expr(node.items[i])
         elements[i - 1] = result.value
-        if type and not types_match(type, result.type) then
+        if type and not self:types_match(type, result.type) then
             return nil, "literal array types do not match"
         end
         if not type then type = result.type end
