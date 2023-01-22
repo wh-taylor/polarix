@@ -150,6 +150,18 @@ function interpreter.interpret(tree)
     ctx:scope_out()
 end
 
+function ctx:walk_enum_constructor_call(node, parameters)
+    node.args = {}
+    for i, param in ipairs(parameters) do
+        local expr, err = self:walk_expr(param)
+        if err ~= nil then return nil, err end
+        if not self:types_match(expr.type, node.types[i]) then
+            return nil, "enum constructor types do not match" end
+        table.insert(node.args, expr)
+    end
+    return node
+end
+
 function ctx:walk_closure_call(node, parameters)
     self:scope_in()
     for i = 1, #parameters do
@@ -344,16 +356,8 @@ function ctx:walk_call(node)
         return self:walk_function(called.value, node.args) end
     if called.type.name == "closure" then
         return self:walk_closure_call(called.value, node.args) end
-    -- interpret enum field call
-    local args = {}
-    local types = {}
-    for _, argument in ipairs(node.args) do
-        local walked = self:walk_expr(argument)
-        table.insert(args, walked)
-        table.insert(types, walked.type)
-    end
-    return self:value({ called.value[1], table.unpack(args) },
-        maketype(called.type.name, types))
+    if called.value._title == "enum_constructor" then
+        return self:walk_enum_constructor_call(called.value, node.args) end
 end
 
 function ctx:walk_index(node)
