@@ -813,7 +813,6 @@ function ctx:parse_constructor()
             table.insert(fields, { name = field_name, value = field_value })
         else
             table.insert(fields, { name = field_name, value = field_name })
-            self:next()
         end
         if not (self:match("op", ",") or self:match("op", "}")) then
             return nil, self:err("expected ',' or '}'") end
