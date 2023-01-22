@@ -63,39 +63,39 @@ function interpreter.interpret(tree)
     ctx.types = {}
 
     ctx:scope_in()
-    for i = 1, #tree do
-        if tree[i]._title == "enum" then
-            table.insert(ctx.types, tree[i].mocktype)
-            ctx.namespaces[tree[i].mocktype.name.id] = {}
-            for j = 1, #tree[i].fields do
+    for _, statement in ipairs(tree) do
+        if statement._title == "enum" then
+            table.insert(ctx.types, statement.mocktype)
+            ctx.namespaces[statement.mocktype.name.id] = {}
+            for _, field in ipairs(statement.fields) do
                 ctx.namespaces
-                    [tree[i].mocktype.name.id]
-                    [tree[i].fields[j].name.id] = tree[i].fields[j]
+                    [statement.mocktype.name.id]
+                    [field.name.id] = field
             end
         end
 
-        if tree[i]._title == "function" then
+        if statement._title == "function" then
             local paramtypes = {}
-            for j = 1, #tree[i].parameters do
+            for _, parameter in ipairs(statement.parameters) do
                 local has_type = false
                 for _, type in ipairs(ctx.types) do
-                    if fits_mocktype(tree[i].parameters[j].type, type) then
+                    if fits_mocktype(parameter.type, type) then
                         has_type = true
                         break
                     end
                 end
                 if not has_type then return nil, "type does not exist" end
-                table.insert(paramtypes, tree[i].parameters[j].type)
+                table.insert(paramtypes, parameter.type)
             end
-            table.insert(paramtypes, tree[i].returntype)
-            ctx:new_variable(tree[i].name.id, tree[i],
+            table.insert(paramtypes, statement.returntype)
+            ctx:new_variable(statement.name.id, statement,
                 maketype("Fn", paramtypes))
         end
     end
 
-    for i = 1, #tree do
-        if tree[i]._title == "function" and tree[i].name.id == "main" then
-            local value, err = ctx:walk_function(tree[i], {})
+    for _, statement in ipairs(tree) do
+        if statement._title == "function" and statement.name.id == "main" then
+            local value, err = ctx:walk_function(statement, {})
             if err then return nil, err end
             -- for testing purposes
             if value then
