@@ -349,7 +349,7 @@ end
 
 function ctx:walk_enum_field(node)
     if node._title ~= "enum_field" then return self:walk_bool(node) end
-    return self:value({ node.name.id }, maketype(node.enum.name.id))
+    return self:value({ node.name.id }, maketype(node.mocktype.name.id))
 end
 
 function ctx:walk_bool(node)

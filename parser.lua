@@ -121,7 +121,7 @@ function ctx:parse_enum()
 
     local fields = {}
     while not self:match("op", "}") do
-        table.insert(fields, self:parse_enum_field())
+        table.insert(fields, self:parse_enum_field(mocktype))
         if not (self:match("op", "}") or self:match("op", ",")) then
             return self:err("expected '}' or ','") end
         if self:match("op", ",") then self:next() end
@@ -133,7 +133,7 @@ function ctx:parse_enum()
 end
 
 -- enum_field ::= IDENTIFIER ('(' type, ')')?
-function ctx:parse_enum_field()
+function ctx:parse_enum_field(mocktype)
     local name, err = self:parse_identifier()
     if err ~= nil then return nil, err end
     local types = {}
@@ -148,7 +148,12 @@ function ctx:parse_enum_field()
         self:next()
         if #types == 0 then return self:err("expected type") end
     end
-    return { _title = "enum_field", name = name, types = types }
+    return {
+        _title = "enum_field",
+        mocktype = mocktype,
+        name = name,
+        types = types
+    }
 end
 
 -- struct ::= 'struct' mocktype ('{' field, '}' | ';')
