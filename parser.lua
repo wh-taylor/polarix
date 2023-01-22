@@ -334,7 +334,7 @@ function ctx:parse_block()
         local statement, err = self:parse_statement()
         if err ~= nil then return nil, err end
 
-        if is_one_of(statement.a, { "for", "if", "while", "loop" }) then
+        if is_one_of(statement._title, { "for", "if", "while", "loop" }) then
             if statement.block.expr ~= nil then
                 expr = statement
             else
