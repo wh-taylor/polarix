@@ -62,6 +62,32 @@ function interpreter.interpret(tree)
     ctx.locals = {}
     ctx.types = {}
 
+    for _, mocktype in ipairs({
+        makemocktype("i8"),
+        makemocktype("i16"),
+        makemocktype("i32"),
+        makemocktype("i64"),
+        makemocktype("i128"),
+        makemocktype("isize"),
+        makemocktype("u8"),
+        makemocktype("u16"),
+        makemocktype("u32"),
+        makemocktype("u64"),
+        makemocktype("u128"),
+        makemocktype("usize"),
+        makemocktype("f32"),
+        makemocktype("f64"),
+        makemocktype("bool"),
+        makemocktype("char"),
+        makemocktype("fn"),
+        makemocktype("closure"),
+        makemocktype("String"),
+        makemocktype("Array", {{}}),
+        makemocktype("Vector", {{}}),
+        makemocktype("Option", {{}}),
+        makemocktype("Result", {{}, {}}),
+    }) do table.insert(ctx.types, mocktype) end
+
     ctx:scope_in()
     for _, statement in ipairs(tree) do
         if statement._title == "enum" then
@@ -89,7 +115,7 @@ function interpreter.interpret(tree)
             end
             table.insert(paramtypes, statement.returntype)
             ctx:new_variable(statement.name.id, statement,
-                maketype("Fn", paramtypes))
+                maketype("fn", paramtypes))
         end
     end
 
@@ -165,7 +191,7 @@ function ctx:walk_closure(node)
     for i = 1, #node.parameters do
         table.insert(paramtypes, node.parameters[i].type)
     end
-    return self:value(node, maketype("Closure", paramtypes))
+    return self:value(node, maketype("closure", paramtypes))
 end
 
 function ctx:walk_try(node)
@@ -306,9 +332,9 @@ end
 function ctx:walk_call(node)
     if node._title ~= "call" then return self:walk_index(node) end
     local called, err = self:walk_expr(node.called)
-    if called.type.name == "Fn" then
+    if called.type.name == "fn" then
         return self:walk_function(called.value, node.args) end
-    if called.type.name == "Closure" then
+    if called.type.name == "closure" then
         return self:walk_closure_call(called.value, node.args) end
 end
 
@@ -321,9 +347,9 @@ end
 function ctx:walk_bool(node)
     if not node._title == "id" then return self:walk_var(node) end
     if node.id == "true" then
-        return self:value(true, maketype("boolean")) end
+        return self:value(true, maketype("bool")) end
     if node.id == "false" then
-        return self:value(false, maketype("boolean")) end
+        return self:value(false, maketype("bool")) end
     return self:walk_var(node)
 end
 
@@ -336,7 +362,7 @@ end
 
 function ctx:walk_num(node)
     if node._title ~= "num" then return self:walk_string(node) end
-    return self:value(tonumber(node.num), maketype("Num"))
+    return self:value(tonumber(node.num), maketype("i32"))
 end
 
 function ctx:walk_string(node)
