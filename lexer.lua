@@ -81,7 +81,8 @@ function new_context(file_name, code)
                 else
                     table.insert(self.tokens, new_token("num", num, ctx))
                 end
-                if not self:char():match("[%d%p \n\t\r]") then
+                if (not self:char():match("[%d%p \n\t\r]")) 
+                  and num:sub(-1) ~= "." then
                     local ctx = self:copy()
                     self:lex_word()
                     local name = self.tokens[#self.tokens].value
