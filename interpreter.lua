@@ -357,9 +357,18 @@ function ctx:walk_exp(node)
 end
 
 function ctx:walk_neg(node)
-    if node._title ~= "neg" then return self:walk_scoper(node) end
+    if node._title ~= "neg" then return self:walk_dot(node) end
     local value = self:walk_expr(node.value)
     return self:value(-value.value, value.type)
+end
+
+function ctx:walk_dot(node)
+    if node._title ~= "dot" then return self:walk_scoper(node) end
+    local source, err = self:walk_expr(node.source)
+    if source.value.fields then -- struct accessing
+        return source.value.fields[node.postdot.id]
+    end
+    return nil, "misuse of dot operator"
 end
 
 function ctx:walk_scoper(node)
