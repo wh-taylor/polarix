@@ -401,6 +401,7 @@ end
 function ctx:walk_constructor(node)
     if node._title ~= "constructor" then return self:walk_bool(node) end
     local struct = self:walk_var(node.struct).value
+    local fields = {}
 
     for i, field in ipairs(node.fields) do
         if field.name.id ~= struct.fields[i].name.id then
@@ -411,9 +412,11 @@ function ctx:walk_constructor(node)
         if not self:types_match(expr.type, struct.fields[i].type) then
             return nil, "constructor field type does not match with struct"
         end
+
+        fields[field.name.id] = expr
     end
 
-    return self:value({ name = struct.mocktype.name.id, fields = node.fields },
+    return self:value({ name = struct.mocktype.name.id, fields = fields },
         maketype(struct.mocktype.name.id))
 end
 
