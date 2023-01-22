@@ -212,6 +212,7 @@ end
 function ctx:walk_block(node)
     for i = 1, #node.statements do
         local value, err = self:walk_statement(node.statements[i])
+        if err ~= nil then return nil, err end
     end
     if node.expr then return self:walk_expr(node.expr) end
 end
@@ -222,7 +223,8 @@ end
 
 function ctx:walk_let(node)
     if node._title ~= "let" then return self:walk_expr(node) end
-    local expr = self:walk_expr(node.expr)
+    local expr, err = self:walk_expr(node.expr)
+    if err ~= nil then return nil, err end
     local _, err = self:new_variable(node.lvalue.id, expr.value, expr.type)
     if err ~= nil then return nil, err end
 end
@@ -365,6 +367,7 @@ end
 function ctx:walk_dot(node)
     if node._title ~= "dot" then return self:walk_scoper(node) end
     local source, err = self:walk_expr(node.source)
+    if err ~= nil then return nil, err end
     if source.value.fields then -- struct accessing
         return source.value.fields[node.postdot.id]
     end
@@ -409,24 +412,26 @@ end
 
 function ctx:walk_constructor(node)
     if node._title ~= "constructor" then return self:walk_bool(node) end
-    local struct = self:walk_var(node.struct).value
+    local struct, err = self:walk_var(node.struct)
+    if err ~= nil then return nil, err end
     local fields = {}
 
     for i, field in ipairs(node.fields) do
-        if field.name.id ~= struct.fields[i].name.id then
+        if field.name.id ~= struct.value.fields[i].name.id then
             return nil, "constructor field name does not match with struct"
         end
         local expr, err = self:walk_expr(field.value)
         if err ~= nil then return nil, err end
-        if not self:types_match(expr.type, struct.fields[i].type) then
+        if not self:types_match(expr.type, struct.value.fields[i].type) then
             return nil, "constructor field type does not match with struct"
         end
 
         fields[field.name.id] = expr
     end
 
-    return self:value({ name = struct.mocktype.name.id, fields = fields },
-        maketype(struct.mocktype.name.id))
+    return self:value({ name = struct.value.mocktype.name.id,
+        fields = fields },
+            maketype(struct.value.mocktype.name.id))
 end
 
 function ctx:walk_bool(node)
