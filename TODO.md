@@ -9,7 +9,8 @@
 - [ ] Structs
 - [ ] Generics
 - [ ] Implement modules
-- [ ] Type check everything
+- [ ] Type check operators
 - [ ] Prohibit keywords as identifiers
+- [x] Type check functions
 - [x] Enums
 - [x] Implement calling closures
