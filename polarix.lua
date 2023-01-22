@@ -36,7 +36,6 @@ function run(file_name)
             .. err.ctx.tokens[err.ctx.index].value .. "'")
         return
     end
-    print(inspect(tree))
 
     local value, err = interpreter.interpret(tree)
     if err ~= nil then
