@@ -19,20 +19,20 @@ local function fits_mocktype(type, mocktype)
     return true
 end
 
-function ctx:types_match(inner, outer)
-    local function types_match(inner, outer)
-        if inner._title ~= outer._title then return false end
-        if inner.name ~= outer.name then return false end
-        if #inner.subtypes ~= #outer.subtypes then return false end
-        for i = 1, #inner.subtypes do
-            if not types_match(inner.subtypes[i],
-              outer.subtypes[i]) then
-                return false
-            end
+function ctx:actual_types_match(inner, outer)
+    if inner._title ~= outer._title then return false end
+    if inner.name ~= outer.name then return false end
+    if #inner.subtypes ~= #outer.subtypes then return false end
+    for i = 1, #inner.subtypes do
+        if not types_match(inner.subtypes[i],
+          outer.subtypes[i]) then
+            return false
         end
-        return true
     end
+    return true
+end
 
+function ctx:types_match(inner, outer)
     if inner.value and inner.value._title == "enum_constructor" then
         local type = self:get_mocktype(outer.type.name)
 
@@ -51,7 +51,7 @@ function ctx:types_match(inner, outer)
 
         for i, argtype in ipairs(field.types) do
             if typevars[argtype.name]
-              and not types_match(inner.value.args[i].type,
+              and not self:actual_types_match(inner.value.args[i].type,
               outer.type.subtypes[typevars[argtype.name]]) then
                 return false
             end
