@@ -217,6 +217,22 @@ function ctx:parse_mocktype()
     }
 end
 
+function ctx:parse_generic_input()
+    local types = {}
+    if not self:match("op", "<") then return nil, self:err("expected '<'") end
+    self:next()
+    while not self:match("op", ">") do
+        local type, err = self:parse_type()
+        if err ~= nil then return nil, err end
+        table.insert(types, type)
+        if not (self:match("op", ">") or self:match("op", ",")) then
+            return self:err("expected '>' or ','") end
+        if self:match("op", ",") then self:next() end
+    end
+    self:next()
+    return types
+end
+
 -- function ::= function_header (block | '=' expr ';')
 function ctx:parse_function()
     local function_header, err = self:parse_function_header()
