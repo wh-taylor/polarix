@@ -19,16 +19,21 @@ local function fits_mocktype(type, mocktype)
     return true
 end
 
-function ctx:types_match(type1, type2)
-    if type1._title ~= type2._title then return false end
-    if type1.name ~= type2.name then return false end
-    if #type1.subtypes ~= #type2.subtypes then return false end
-    for i = 1, #type1.subtypes do
-        if not self:types_match(type1.subtypes[i], type2.subtypes[i]) then
-            return false
+function ctx:types_match(inner, outer)
+    local function types_match(inner, outer)
+        if inner._title ~= outer._title then return false end
+        if inner.name ~= outer.name then return false end
+        if #inner.subtypes ~= #outer.subtypes then return false end
+        for i = 1, #inner.subtypes do
+            if not types_match(inner.subtypes[i],
+              outer.subtypes[i]) then
+                return false
+            end
         end
+        return true
     end
-    return true
+
+    return types_match(inner.type, outer.type)
 end
 
 function ctx:scope_in()
@@ -168,8 +173,8 @@ function ctx:walk_enum_constructor_call(node, parameters)
     for i, param in ipairs(parameters) do
         local expr, err = self:walk_expr(param)
         if err ~= nil then return nil, err end
-        if not self:types_match(expr.type, node.value.types[i]) then
-            return nil, "enum constructor types do not match" end
+        -- if not self:types_match(expr.type, node.value.types[i]) then
+        --     return nil, "enum constructor types do not match" end
         table.insert(node.value.args, expr)
     end
     return node
@@ -195,7 +200,7 @@ function ctx:walk_function(node, parameters)
         local param, err = self:walk_expr(parameters[i])
         if err ~= nil then return nil, err end
         -- check if parameter type matches argument type
-        if not self:types_match(param.type, node.parameters[i].type) then
+        if not self:types_match(param, node.parameters[i]) then
             return nil, "parameter and argument types do not match"
         end
         -- load parameter to locals
@@ -428,7 +433,7 @@ function ctx:walk_constructor(node)
         end
         local expr, err = self:walk_expr(field.value)
         if err ~= nil then return nil, err end
-        if not self:types_match(expr.type, struct.value.fields[i].type) then
+        if not self:types_match(expr, struct.value.fields[i]) then
             return nil, "constructor field type does not match with struct"
         end
 
@@ -474,14 +479,14 @@ end
 function ctx:walk_array(node)
     if node._title ~= "array" then return nil end
     local elements = {}
-    local type
+    local first
     for i = 1, #node.items do
         local result = self:walk_expr(node.items[i])
         elements[i - 1] = result.value
-        if type and not self:types_match(type, result.type) then
+        if first and not self:types_match(first, result) then
             return nil, "literal array types do not match"
         end
-        if not type then type = result.type end
+        if not first then first = result end
     end
     return self:value(elements, maketype("Array", { type }))
 end
