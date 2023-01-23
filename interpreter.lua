@@ -41,19 +41,22 @@ function ctx:types_match(inner, outer)
             typevars[typevar.id] = i
         end
 
-        for _, field in ipairs(type.fields) do
-            if inner.value.name.id == field.name.id then
-                for i, argtype in ipairs(field.types) do
-                    if typevars[argtype.name] then
-                        if not types_match(inner.value.args[i].type,
-                          outer.type.subtypes[typevars[argtype.name]]) then
-                            return false
-                        end
-                    end
-                end
-                return true
+        local field
+        for _, typefield in ipairs(type.fields) do
+            if inner.value.name.id == typefield.name.id then
+                field = typefield
             end
         end
+        if field == nil then return "???" end
+
+        for i, argtype in ipairs(field.types) do
+            if typevars[argtype.name]
+              and not types_match(inner.value.args[i].type,
+              outer.type.subtypes[typevars[argtype.name]]) then
+                return false
+            end
+        end
+        return true
     end
 
     if inner.value and inner.value._title == "enum_field" then
