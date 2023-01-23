@@ -70,30 +70,30 @@ function ctx:types_match(inner, outer)
 end
 
 function ctx:scope_in()
-    table.insert(ctx.locals, {})
+    table.insert(self.locals, {})
 end
 
 function ctx:scope_out()
-    ctx.locals[#ctx.locals] = nil
+    self.locals[#self.locals] = nil
 end
 
 function ctx:new_variable(name, value, type)
-    if ctx.locals[#ctx.locals][name] then
+    if self.locals[#self.locals][name] then
         return nil, "identifier already in locals" end
-    ctx.locals[#ctx.locals][name] = { value = value, type = type }
+    self.locals[#self.locals][name] = { value = value, type = type }
 end
 
 function ctx:get_var(name)
-    for scope = #ctx.locals, 1, -1 do
-        if ctx.locals[scope][name] then
-            return ctx.locals[scope][name]
+    for scope = #self.locals, 1, -1 do
+        if self.locals[scope][name] then
+            return self.locals[scope][name]
         end
     end
     return nil, "variable has not been initialized"
 end
 
 function ctx:get_mocktype(name)
-    for _, type in ipairs(ctx.types) do
+    for _, type in ipairs(self.types) do
         if name == type.name then
             return type
         end
