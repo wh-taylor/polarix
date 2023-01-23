@@ -33,43 +33,43 @@ function ctx:actual_types_match(inner, outer)
 end
 
 function ctx:types_match(inner, outer)
-    if inner.value and inner.value._title == "enum_constructor" then
-        local type = self:get_mocktype(outer.type.name)
-
-        local typevars = {}
-        for i, typevar in ipairs(type.typevars) do
-            typevars[typevar.id] = i
-        end
-
-        local field
-        for _, typefield in ipairs(type.fields) do
-            if inner.value.name.id == typefield.name.id then
-                field = typefield
-            end
-        end
-        if field == nil then return "???" end
-
-        for i, argtype in ipairs(field.types) do
-            if typevars[argtype.name]
-              and not self:actual_types_match(inner.value.args[i].type,
-              outer.type.subtypes[typevars[argtype.name]]) then
-                return false
-            end
-        end
-        return true
+    if type(inner) == "table"
+      and inner.value
+      and (inner.value._title == "enum_constructor"
+      or inner.value._title == "enum_field") then
+        return self:enum_types_match(inner, outer)
     end
 
-    if inner.value and inner.value._title == "enum_field" then
-        local type = self:get_mocktype(outer.type.name)
-        for _, field in ipairs(type.fields) do
-            if inner.value.name.id == field.name.id then
+    return self:actual_types_match(inner.type, outer.type)
+end
+
+function ctx:enum_types_match(inner, outer)
+    local type = self:get_mocktype(outer.type.name)
+
+    local typevars = {}
+    for i, typevar in ipairs(type.typevars) do
+        typevars[typevar.id] = i
+    end
+    
+    local field
+    for _, typefield in ipairs(type.fields) do
+        if inner.value.name.id == typefield.name.id then
+            field = typefield
+            if inner.value._title == "enum_field" then
                 return true
             end
         end
-        return false
     end
-
-    return types_match(inner.type, outer.type)
+    if field == nil then return "???" end
+    
+    for i, argtype in ipairs(field.types) do
+        if typevars[argtype.name]
+          and not self:actual_types_match(inner.value.args[i].type,
+          outer.type.subtypes[typevars[argtype.name]]) then
+            return false
+        end
+    end
+    return true
 end
 
 function ctx:scope_in()
