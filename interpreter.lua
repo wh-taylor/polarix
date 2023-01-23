@@ -33,6 +33,39 @@ function ctx:types_match(inner, outer)
         return true
     end
 
+    if inner.value and inner.value._title == "enum_constructor" then
+        local type = self:get_mocktype(outer.type.name)
+
+        local typevars = {}
+        for i, typevar in ipairs(type.typevars) do
+            typevars[typevar.id] = i
+        end
+
+        for _, field in ipairs(type.fields) do
+            if inner.value.name.id == field.name.id then
+                for i, argtype in ipairs(field.types) do
+                    if typevars[argtype.name] then
+                        if not types_match(inner.value.args[i].type,
+                          outer.type.subtypes[typevars[argtype.name]]) then
+                            return false
+                        end
+                    end
+                end
+                return true
+            end
+        end
+    end
+
+    if inner.value and inner.value._title == "enum_field" then
+        local type = self:get_mocktype(outer.type.name)
+        for _, field in ipairs(type.fields) do
+            if inner.value.name.id == field.name.id then
+                return true
+            end
+        end
+        return false
+    end
+
     return types_match(inner.type, outer.type)
 end
 
@@ -57,6 +90,15 @@ function ctx:get_var(name)
         end
     end
     return nil, "variable has not been initialized"
+end
+
+function ctx:get_mocktype(name)
+    for _, type in ipairs(ctx.types) do
+        if name == type.name then
+            return type
+        end
+    end
+    return nil, "type does not exist"
 end
 
 function ctx:value(value, type)
@@ -91,19 +133,21 @@ function interpreter.interpret(tree)
         makemocktype("String"),
         makemocktype("Array", {{}}),
         makemocktype("Vector", {{}}),
-        makemocktype("Option", {{}}),
-        makemocktype("Result", {{}, {}}),
+        -- makemocktype("Option", {{}}),
+        -- makemocktype("Result", {{}, {}}),
     }) do table.insert(ctx.types, mocktype) end
 
     ctx:scope_in()
     for _, statement in ipairs(tree) do
         if statement._title == "enum" then
+            statement.mocktype.fields = statement.fields
+            statement.mocktype.name = statement.mocktype.name.id
             table.insert(ctx.types, statement.mocktype)
-            ctx.namespaces[statement.mocktype.name.id] = {}
+            ctx.namespaces[statement.mocktype.name] = {}
             for _, field in ipairs(statement.fields) do
                 if #field.types > 0 then
                     ctx.namespaces
-                        [statement.mocktype.name.id]
+                        [statement.mocktype.name]
                         [field.name.id] = {
                             _title = "enum_constructor",
                             mocktype = field.mocktype,
@@ -112,7 +156,7 @@ function interpreter.interpret(tree)
                         }
                 else
                     ctx.namespaces
-                        [statement.mocktype.name.id]
+                        [statement.mocktype.name]
                         [field.name.id] = {
                             _title = "enum_field",
                             mocktype = field.mocktype,
