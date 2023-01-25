@@ -92,6 +92,98 @@ including the underscore until a character that is neither of the two is
 encountered. If the word ends up matching with a pre-defined keyword, the token
 is labeled as a keyword; otherwise, it is labeled as an identifier.
 
+```rs
+// Tokens
+
+struct Token
+    content: TokenContent
+    context: TokenContext
+
+struct TokenContext
+    index: uint
+    column: uint
+    line: uint
+    file_name: str*
+    file_text: str*
+
+enum TokenContent
+    IntToken(int)
+    FloatToken(float)
+    StringToken(str)
+    CharToken(char)
+    Identifier(str)
+    TrueKeyword
+    FalseKeyword
+    ImportKeyword
+    UseKeyword
+    FnKeyword
+    StructKeyword
+    EnumKeyword
+    TraitKeyword
+    InstanceKeyword
+    TypeKeyword
+    ConstKeyword
+    LetKeyword
+    ForKeyword
+    InKeyword
+    IfKeyword
+    ElseKeyword
+    WhileKeyword
+    LoopKeyword
+    TryKeyword
+    CatchKeyword
+    OrKeyword
+    AndKeyword
+    NotKeyword
+    ReturnKeyword
+    BreakKeyword
+    ContinueKeyword
+    SuperKeyword
+    SelfKeyword
+    Int8Keyword
+    Int16Keyword
+    Int32Keyword
+    Int64Keyword
+    Int128Keyword
+    IntSizeKeyword
+    UInt8Keyword
+    UInt16Keyword
+    UInt32Keyword
+    UInt64Keyword
+    UInt128Keyword
+    UIntSizeKeyword
+    Float32Keyword
+    Float64Keyword
+    BoolKeyword
+    CharKeyword
+    LeftCurlyBracketOperator
+    RightCurlyBracketOperator
+    LeftSquareBracketOperator
+    RightSquareBracketOperator
+    LeftParenthesisOperator
+    RightParenthesisOperator
+    SemicolonOperator
+    CommaOperator
+    ColonOperator
+    EqualOperator
+    BarOperator
+    DoubleEqualOperator
+    NotEqualOperator
+    LeftChevronOperator
+    RightChevronOperator
+    LeftChevronEqualOperator
+    RightChevronEqualOperator
+    PlusOperator
+    MinusOperator
+    StarOperator
+    SlashOperator
+    PercentOperator
+    CaretOperator
+    DotOperator
+    ScopeResolutionOperator
+    DoubleArrowOperator
+```
+
 ## Parser
 
 The parser takes a list of tokens as input and recursively generates an
