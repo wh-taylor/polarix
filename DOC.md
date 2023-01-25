@@ -91,3 +91,192 @@ In the word mode, the lexer simply iterates through word and number characters
 including the underscore until a character that is neither of the two is
 encountered. If the word ends up matching with a pre-defined keyword, the token
 is labeled as a keyword; otherwise, it is labeled as an identifier.
+
+## Parser
+
+The parser takes a list of tokens as input and recursively generates an
+abstract syntax tree of nodes.
+
+### Top-Level Statements
+
+Top-level statements are any statements that can be placed directly in the main
+body of the program.
+
+<sub>Examples of top-level statements:</sub>
+
+ - `import`
+ - `use`
+ - `fn`
+ - `struct`
+ - `enum`
+ - `trait`
+ - `instance`
+ - `type`
+ - `const`
+
+The keywords above are actively searched for in the main function of the parser.
+
+### AST Nodes
+
+```rs
+// Specifications have Rust-like pseudocode syntax
+
+// Item nodes
+
+enum Item
+    Import
+        imported: str
+    Use
+        used: str
+    Function
+        header: FunctionHeader
+        body: Block
+    Struct
+        name: str
+        type_parameters: [str]
+        field_names: [str]
+        field_types: [Type]
+    Enum
+        name: str
+        type_parameters: [str]
+        field_names: [str]
+        field_types: [[Type]]
+    Trait
+        name: str
+        type_parameters: [str]
+        items: [Items]
+    Instance
+        trait_: Trait
+        type_: Type
+        items: [Items]
+    TypeAlias
+        newtype: str
+        oldtype: Type
+    ConstItem
+        name: str
+        type_: Type
+        value: Expression
+    StaticItem
+        name: str
+        type_: Type
+        value: Expression
+
+struct FunctionHeader
+    name: str
+    parameters: [str]?
+    types: [Type]
+    return_type: Type
+
+// Expression nodes
+
+enum Expression
+    ForExpression
+        pattern: Pattern
+        iterator: Expression
+        body: Block
+    IfExpression
+        condition: Expression
+        body: Block
+        alternate: Block
+    WhileExpression
+        condition: Expression
+        body: Block
+    LoopExpression
+        body: Block
+    MatchExpression
+        discriminant: Expression
+        branches: [MatchBranch]
+    BlockExpression
+        body: Block
+    ArrayExpression
+        type_: Type
+        elements: [Expression]
+    CallExpression
+        callee: Expression
+        arguments: [Expression]
+    BinaryOp
+        op: Operator
+        left: Expression
+        right: Expression
+    UnaryOp
+        op: Operator
+        child: Expression
+    Variable
+        name: str
+    IntLiteral
+        value: int
+    FloatLiteral
+        value: float
+    BooleanLiteral
+        value: bool
+
+struct Block
+    statements: [Statement]
+    expression: Expression
+
+struct MatchBranch
+    pattern: Pattern
+    consequent: Expression
+
+enum Operator
+    AddOperator
+    SubtractOperator
+    MultiplyOperator
+    DivideOperator
+    ModuloOperator
+    NegateOperator
+
+// Statement nodes
+
+enum Statement
+    LetStatement
+        pattern: Pattern
+        expression: Expression
+    ConstStatement
+        pattern: Pattern
+        expression: Expression
+    ExpressionStatement
+        expression: Expression
+
+enum Type
+    Int8
+    Int16
+    Int32
+    Int64
+    Int128
+    IntSize
+    UInt8
+    UInt16
+    UInt32
+    UInt64
+    UInt128
+    UIntSize
+    Float32
+    Float64
+    Boolean
+    Char
+    Array
+        type_: Type
+        length: uint
+    Pointer
+        pointed: Type
+    Type
+        name: str
+    GenericType
+        name: str
+        types: [Type]
+    Trait
+        trait_: Trait
+
+enum Trait
+    Trait
+        name: str
+    GenericTrait
+        name: str
+        types: [Type]
+```
+
+## Interpreter
+
+The interpreter takes an abstract syntax tree as input and recursively explores
+each node and runs it.
