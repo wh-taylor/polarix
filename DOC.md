@@ -140,22 +140,22 @@ enum TokenContent
     ContinueKeyword
     SuperKeyword
     SelfKeyword
-    Int8Keyword
-    Int16Keyword
-    Int32Keyword
-    Int64Keyword
-    Int128Keyword
-    IntSizeKeyword
-    UInt8Keyword
-    UInt16Keyword
-    UInt32Keyword
-    UInt64Keyword
-    UInt128Keyword
-    UIntSizeKeyword
-    Float32Keyword
-    Float64Keyword
-    BoolKeyword
-    CharKeyword
+    Int8Keyword // i8
+    Int16Keyword // i16
+    Int32Keyword // i32
+    Int64Keyword // i64
+    Int128Keyword // i128
+    IntSizeKeyword // isize
+    UInt8Keyword // u8
+    UInt16Keyword // u16
+    UInt32Keyword // u32
+    UInt64Keyword // u64
+    UInt128Keyword // u128
+    UIntSizeKeyword // usize
+    Float32Keyword // f32
+    Float64Keyword // f64
+    BoolKeyword // bool
+    CharKeyword // char
     LeftCurlyBracketOperator // {
     RightCurlyBracketOperator // }
     LeftSquareBracketOperator // [
