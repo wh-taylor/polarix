@@ -208,6 +208,13 @@ enum Expression
     BreakExpression
         returned: Expression?
     ContinueExpression
+    StructExpression
+        struct_: str
+        fields: [str]
+        values: [Expression]
+    PathExpression
+        source: PathSegment
+        member: PathSegment
     BinaryOp
         op: Operator
         left: Expression
@@ -239,6 +246,12 @@ enum Operator
     DivideOperator
     ModuloOperator
     NegateOperator
+
+enum PathSegment
+    PathIdentifier
+        id: str
+    SuperPath
+    SelfPath
 
 // Statement nodes
 
