@@ -188,6 +188,11 @@ enum Expression
         branches: [MatchBranch]
     BlockExpression
         body: Block
+    TryExpression
+        expression: Expression
+    CatchExpression
+        expression: Expression
+        result: Expression
     ArrayExpression
         type_: Type
         elements: [Expression]
