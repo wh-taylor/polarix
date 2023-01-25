@@ -194,6 +194,20 @@ enum Expression
     CallExpression
         callee: Expression
         arguments: [Expression]
+    IndexExpression
+        indexed: Expression
+        argument: Expression
+    FieldExpression
+        left: Expression
+        right: str
+    TypeCastExpression
+        value: Expression
+        type_: Type
+    ReturnExpression
+        returned: Expression?
+    BreakExpression
+        returned: Expression?
+    ContinueExpression
     BinaryOp
         op: Operator
         left: Expression
