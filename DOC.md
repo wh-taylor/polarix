@@ -233,6 +233,10 @@ enum Expression
         value: int
     FloatLiteral
         value: float
+    StringLiteral
+        value: str
+    CharLiteral
+        value: char
     BooleanLiteral
         value: bool
 
