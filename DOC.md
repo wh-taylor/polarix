@@ -92,9 +92,9 @@ including the underscore until a character that is neither of the two is
 encountered. If the word ends up matching with a pre-defined keyword, the token
 is labeled as a keyword; otherwise, it is labeled as an identifier.
 
-```rs
-// Tokens
+### Lexer Tokens
 
+```rs
 struct Token {
     content: TokenContent,
     context: TokenContext,
@@ -214,8 +214,6 @@ The keywords above are actively searched for in the main function of the parser.
 ### AST Nodes
 
 ```rs
-// Nodes
-
 // Item nodes
 
 enum Item {
