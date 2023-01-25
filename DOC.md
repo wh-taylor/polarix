@@ -156,32 +156,32 @@ enum TokenContent
     Float64Keyword
     BoolKeyword
     CharKeyword
-    LeftCurlyBracketOperator
-    RightCurlyBracketOperator
-    LeftSquareBracketOperator
-    RightSquareBracketOperator
-    LeftParenthesisOperator
-    RightParenthesisOperator
-    SemicolonOperator
-    CommaOperator
-    ColonOperator
-    EqualOperator
-    BarOperator
-    DoubleEqualOperator
-    NotEqualOperator
-    LeftChevronOperator
-    RightChevronOperator
-    LeftChevronEqualOperator
-    RightChevronEqualOperator
-    PlusOperator
-    MinusOperator
-    StarOperator
-    SlashOperator
-    PercentOperator
-    CaretOperator
-    DotOperator
-    ScopeResolutionOperator
-    DoubleArrowOperator
+    LeftCurlyBracketOperator // {
+    RightCurlyBracketOperator // }
+    LeftSquareBracketOperator // [
+    RightSquareBracketOperator // ]
+    LeftParenthesisOperator // (
+    RightParenthesisOperator // )
+    SemicolonOperator // ;
+    CommaOperator // ,
+    ColonOperator // :
+    EqualOperator // =
+    BarOperator // |
+    DoubleEqualOperator // ==
+    NotEqualOperator // !=
+    LeftChevronOperator // <
+    RightChevronOperator // >
+    LeftChevronEqualOperator // <=
+    RightChevronEqualOperator // >=
+    PlusOperator // +
+    MinusOperator // -
+    StarOperator // *
+    SlashOperator // /
+    PercentOperator // %
+    CaretOperator // ^
+    DotOperator // .
+    ScopeResolutionOperator // ::
+    DoubleArrowOperator // =>
 ```
 
 ## Parser
