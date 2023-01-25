@@ -95,93 +95,96 @@ is labeled as a keyword; otherwise, it is labeled as an identifier.
 ```rs
 // Tokens
 
-struct Token
-    content: TokenContent
-    context: TokenContext
+struct Token {
+    content: TokenContent,
+    context: TokenContext,
+}
 
-struct TokenContext
-    index: uint
-    column: uint
-    line: uint
-    file_name: str*
-    file_text: str*
+struct TokenContext {
+    index: usize,
+    column: usize,
+    line: usize,
+    file_name: String,
+    file_text: String,
+}
 
-enum TokenContent
-    IntToken(int)
-    FloatToken(float)
-    StringToken(str)
-    CharToken(char)
-    Identifier(str)
-    TrueKeyword
-    FalseKeyword
-    ImportKeyword
-    UseKeyword
-    FnKeyword
-    StructKeyword
-    EnumKeyword
-    TraitKeyword
-    InstanceKeyword
-    TypeKeyword
-    ConstKeyword
-    LetKeyword
-    ForKeyword
-    InKeyword
-    IfKeyword
-    ElseKeyword
-    WhileKeyword
-    LoopKeyword
-    TryKeyword
-    CatchKeyword
-    OrKeyword
-    AndKeyword
-    NotKeyword
-    ReturnKeyword
-    BreakKeyword
-    ContinueKeyword
-    SuperKeyword
-    SelfKeyword
-    Int8Keyword // i8
-    Int16Keyword // i16
-    Int32Keyword // i32
-    Int64Keyword // i64
-    Int128Keyword // i128
-    IntSizeKeyword // isize
-    UInt8Keyword // u8
-    UInt16Keyword // u16
-    UInt32Keyword // u32
-    UInt64Keyword // u64
-    UInt128Keyword // u128
-    UIntSizeKeyword // usize
-    Float32Keyword // f32
-    Float64Keyword // f64
-    BoolKeyword // bool
-    CharKeyword // char
-    LeftCurlyBracketOperator // {
-    RightCurlyBracketOperator // }
-    LeftSquareBracketOperator // [
-    RightSquareBracketOperator // ]
-    LeftParenthesisOperator // (
-    RightParenthesisOperator // )
-    SemicolonOperator // ;
-    CommaOperator // ,
-    ColonOperator // :
-    EqualOperator // =
-    BarOperator // |
-    DoubleEqualOperator // ==
-    NotEqualOperator // !=
-    LeftChevronOperator // <
-    RightChevronOperator // >
-    LeftChevronEqualOperator // <=
-    RightChevronEqualOperator // >=
-    PlusOperator // +
-    MinusOperator // -
-    StarOperator // *
-    SlashOperator // /
-    PercentOperator // %
-    CaretOperator // ^
-    DotOperator // .
-    ScopeResolutionOperator // ::
-    DoubleArrowOperator // =>
+enum TokenContent {
+    IntToken(isize),
+    FloatToken(f64),
+    StringToken(String),
+    CharToken(char),
+    Identifier(String),
+    TrueKeyword,
+    FalseKeyword,
+    ImportKeyword,
+    UseKeyword,
+    FnKeyword,
+    StructKeyword,
+    EnumKeyword,
+    TraitKeyword,
+    InstanceKeyword,
+    TypeKeyword,
+    ConstKeyword,
+    LetKeyword,
+    ForKeyword,
+    InKeyword,
+    IfKeyword,
+    ElseKeyword,
+    WhileKeyword,
+    LoopKeyword,
+    TryKeyword,
+    CatchKeyword,
+    OrKeyword,
+    AndKeyword,
+    NotKeyword,
+    ReturnKeyword,
+    BreakKeyword,
+    ContinueKeyword,
+    SuperKeyword,
+    SelfKeyword,
+    Int8Keyword, // i8
+    Int16Keyword, // i16
+    Int32Keyword, // i32
+    Int64Keyword, // i64
+    Int128Keyword, // i128
+    IntSizeKeyword, // isize
+    UInt8Keyword, // u8
+    UInt16Keyword, // u16
+    UInt32Keyword, // u32
+    UInt64Keyword, // u64
+    UInt128Keyword, // u128
+    UIntSizeKeyword, // usize
+    Float32Keyword, // f32
+    Float64Keyword, // f64
+    BoolKeyword, // bool
+    CharKeyword, // char
+    LeftCurlyBracketOperator, // {
+    RightCurlyBracketOperator, // }
+    LeftSquareBracketOperator, // [
+    RightSquareBracketOperator, // ]
+    LeftParenthesisOperator, // (
+    RightParenthesisOperator, // )
+    SemicolonOperator, // ;
+    CommaOperator, // ,
+    ColonOperator, // :
+    EqualOperator, // =
+    BarOperator, // |
+    DoubleEqualOperator, // ==
+    NotEqualOperator, // !=
+    LeftChevronOperator, // <
+    RightChevronOperator, // >
+    LeftChevronEqualOperator, // <=
+    RightChevronEqualOperator, // >=
+    PlusOperator, // +
+    MinusOperator, // -
+    StarOperator, // *
+    SlashOperator, // /
+    PercentOperator, // %
+    CaretOperator, // ^
+    DotOperator, // .
+    ScopeResolutionOperator, // ::
+    DoubleArrowOperator, // =>
+}
 ```
 
 ## Parser
@@ -211,197 +214,265 @@ The keywords above are actively searched for in the main function of the parser.
 ### AST Nodes
 
 ```rs
-// Specifications have Rust-like pseudocode syntax
+// Nodes
 
 // Item nodes
 
-enum Item
-    Import
-        imported: str
-    Use
-        used: str
-    Function
-        header: FunctionHeader
-        body: Block
-    Struct
-        name: str
-        type_parameters: [str]
-        field_names: [str]
-        field_types: [Type]
-    Enum
-        name: str
-        type_parameters: [str]
-        field_names: [str]
-        field_types: [[Type]]
-    Trait
-        name: str
-        type_parameters: [str]
-        items: [Items]
-    Instance
-        trait_: Trait
-        type_: Type
-        items: [Items]
-    TypeAlias
-        newtype: str
-        oldtype: Type
-    ConstItem
-        name: str
-        type_: Type
-        value: Expression
-    StaticItem
-        name: str
-        type_: Type
-        value: Expression
+enum Item {
+    Import {
+        imported: String,
+    },
+    Use {
+        used: String,
+    },
+    Function {
+        header: FunctionHeader,
+        body: Block,
+    },
+    Struct {
+        name: String,
+        type_parameters: Vec<String>,
+        fields: Vec<StructField>,
+    },
+    Enum {
+        name: String,
+        type_parameters: Vec<String>,
+        fields: Vec<EnumField>,
+    },
+    Trait {
+        name: String,
+        type_parameters: Vec<String>,
+        items: Vec<Items>,
+    },
+    Instance {
+        trait_: Trait,
+        type_: Type,
+        items: Vec<Items>,
+    },
+    TypeAlias {
+        newtype: String,
+        oldtype: Type,
+    },
+    ConstItem {
+        name: String,
+        type_: Type,
+        value: Expression,
+    },
+    StaticItem {
+        name: String,
+        type_: Type,
+        value: Expression,
+    },
+}
 
-struct FunctionHeader
-    name: str
-    parameters: [str]?
-    types: [Type]
-    return_type: Type
+struct FunctionHeader {
+    name: String,
+    parameters: Option<Vec<String>>,
+    types: Vec<Type>,
+    return_type: Type,
+}
+
+struct StructField {
+    name: String,
+    type_: Type,
+}
+
+struct EnumField {
+    name: String,
+    types: Vec<Type>,
+}
 
 // Expression nodes
 
-enum Expression
-    ForExpression
-        pattern: Pattern
-        iterator: Expression
-        body: Block
-    IfExpression
-        condition: Expression
-        body: Block
-        alternate: Block
-    WhileExpression
-        condition: Expression
-        body: Block
-    LoopExpression
-        body: Block
-    MatchExpression
-        discriminant: Expression
-        branches: [MatchBranch]
-    BlockExpression
-        body: Block
-    TryExpression
-        expression: Expression
-    CatchExpression
-        expression: Expression
-        result: Expression
-    ArrayExpression
-        type_: Type
-        elements: [Expression]
-    CallExpression
-        callee: Expression
-        arguments: [Expression]
-    IndexExpression
-        indexed: Expression
-        argument: Expression
-    FieldExpression
-        left: Expression
-        right: str
-    TypeCastExpression
-        value: Expression
-        type_: Type
-    ReturnExpression
-        returned: Expression?
-    BreakExpression
-        returned: Expression?
-    ContinueExpression
-    StructExpression
-        struct_: str
-        fields: [str]
-        values: [Expression]
-    PathExpression
-        source: PathSegment
-        member: PathSegment
-    BinaryOp
-        op: Operator
-        left: Expression
-        right: Expression
-    UnaryOp
-        op: Operator
-        child: Expression
-    Variable
-        name: str
-    IntLiteral
-        value: int
-    FloatLiteral
-        value: float
-    StringLiteral
-        value: str
-    CharLiteral
-        value: char
-    BooleanLiteral
-        value: bool
+enum Expression {
+    ForExpression {
+        pattern: Pattern,
+        iterator: Expression,
+        body: Block,
+    },
+    IfExpression {
+        condition: Expression,
+        body: Block,
+        alternate: Block,
+    },
+    WhileExpression {
+        condition: Expression,
+        body: Block,
+    },
+    LoopExpression {
+        body: Block,
+    },
+    MatchExpression {
+        discriminant: Expression,
+        branches: Vec<MatchBranch>,
+    },
+    BlockExpression {
+        body: Block,
+    },
+    TryExpression {
+        expression: Expression,
+    },
+    CatchExpression {
+        expression: Expression,
+        result: Expression,
+    },
+    ArrayExpression {
+        type_: Type,
+        elements: Vec<Expression>,
+    },
+    CallExpression {
+        callee: Expression,
+        arguments: Vec<Expression>,
+    },
+    IndexExpression {
+        indexed: Expression,
+        argument: Expression,
+    },
+    FieldExpression {
+        left: Expression,
+        right: String,
+    },
+    TypeCastExpression {
+        value: Expression,
+        type_: Type,
+    },
+    ReturnExpression {
+        returned: Option<Expression>,
+    },
+    BreakExpression {
+        returned: Option<Expression>,
+    },
+    ContinueExpression,
+    StructExpression {
+        struct_: String,
+        fields: Vec<StructExpressionField>,
+    },
+    PathExpression {
+        source: PathSegment,
+        member: PathSegment,
+    },
+    BinaryOp {
+        op: Operator,
+        left: Expression,
+        right: Expression,
+    },
+    UnaryOp {
+        op: Operator,
+        child: Expression,
+    },
+    Variable {
+        name: String,
+    },
+    IntLiteral {
+        value: isize,
+    },
+    FloatLiteral {
+        value: f64,
+    },
+    StringLiteral {
+        value: String,
+    },
+    CharLiteral {
+        value: char,
+    },
+    BooleanLiteral {
+        value: bool,
+    },
+}
 
-struct Block
-    statements: [Statement]
-    expression: Expression
+struct Block {
+    statements: Vec<Statement>,
+    expression: Expression,
+}
 
-struct MatchBranch
-    pattern: Pattern
-    consequent: Expression
+struct MatchBranch {
+    pattern: Pattern,
+    consequent: Expression,
+}
 
-enum Operator
-    AddOperator
-    SubtractOperator
-    MultiplyOperator
-    DivideOperator
-    ModuloOperator
-    NegateOperator
+struct StructExpressionField {
+    name: String,
+    expression: Expression,
+}
 
-enum PathSegment
-    PathIdentifier
-        id: str
-    SuperPath
-    SelfPath
+enum Operator {
+    AddOperator,
+    SubtractOperator,
+    MultiplyOperator,
+    DivideOperator,
+    ModuloOperator,
+    NegateOperator,
+}
+
+enum PathSegment {
+    PathIdentifier {
+        id: String
+    },
+    SuperPath,
+    SelfPath,
+}
 
 // Statement nodes
 
-enum Statement
-    LetStatement
-        pattern: Pattern
-        expression: Expression
-    ConstStatement
-        pattern: Pattern
-        expression: Expression
-    ExpressionStatement
-        expression: Expression
+enum Statement {
+    LetStatement {
+        pattern: Pattern,
+        expression: Expression,
+    },
+    ConstStatement {
+        pattern: Pattern,
+        expression: Expression,
+    },
+    ExpressionStatement {
+        expression: Expression,
+    },
+}
 
-enum Type
-    Int8
-    Int16
-    Int32
-    Int64
-    Int128
-    IntSize
-    UInt8
-    UInt16
-    UInt32
-    UInt64
-    UInt128
-    UIntSize
-    Float32
-    Float64
-    Boolean
-    Char
-    Array
-        type_: Type
-        length: uint
-    Pointer
-        pointed: Type
-    Type
-        name: str
-    GenericType
-        name: str
-        types: [Type]
-    Trait
-        trait_: Trait
+enum Type {
+    Int8,
+    Int16,
+    Int32,
+    Int64,
+    Int128,
+    IntSize,
+    UInt8,
+    UInt16,
+    UInt32,
+    UInt64,
+    UInt128,
+    UIntSize,
+    Float32,
+    Float64,
+    Boolean,
+    Char,
+    Array {
+        type_: Type,
+        length: usize,
+    },
+    Pointer {
+        pointed: Type,
+    },
+    Type {
+        name: String,
+    },
+    GenericType {
+        name: String,
+        types: Vec<Type>,
+    },
+    Trait {
+        trait_: Trait,
+    },
+}
 
-enum Trait
-    Trait
-        name: str
-    GenericTrait
-        name: str
-        types: [Type]
+enum Trait {
+    Trait {
+        name: String,
+    },
+    GenericTrait {
+        name: String,
+        types: Vec<Type>,
+    },
+}
 ```
 
 ## Interpreter
