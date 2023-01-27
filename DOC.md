@@ -20,8 +20,8 @@ and splits it up into a series of tokens by iterating through it character by
 character, pointing to each character with an unsigned integer index. Once the
 lexer detects a character of a certain type, it enters a new mode and iterates
 through characters that match the specifications of the respective token type.
-These tokens are then returned to the main file alongside a potential error
-value.
+These tokens are then returned to the parser alongside a potential error value
+one by one each time the lexer is told to iterate a new token.
 
 The lexer stores a structure containing the component's context which holds
 information regarding the exact location of each character such as index,
@@ -168,19 +168,24 @@ enum TokenContent {
     CommaOperator, // ,
     ColonOperator, // :
     EqualOperator, // =
-    BarOperator, // |
+    PipeOperator, // |
     DoubleEqualOperator, // ==
     NotEqualOperator, // !=
     LeftChevronOperator, // <
     RightChevronOperator, // >
     LeftChevronEqualOperator, // <=
     RightChevronEqualOperator, // >=
+    DoubleLeftChevronOperator, // <<
+    DoubleRightChevronOperator, // >>
     PlusOperator, // +
     MinusOperator, // -
     StarOperator, // *
     SlashOperator, // /
     PercentOperator, // %
+    DoubleStarOperator, // **
     CaretOperator, // ^
+    AmpersandOperator // &
+    TildeOperator // ~
     DotOperator, // .
     ScopeResolutionOperator, // ::
     DoubleArrowOperator, // =>
@@ -208,12 +213,14 @@ body of the program.
  - `instance`
  - `type`
  - `const`
+ - `static`
 
-The keywords above are actively searched for in the main function of the parser.
+The keywords above are actively searched for in the main function of the
+parser.
 
 ### AST Nodes
 
-```rs
+```rs {filename="main.rs"}
 // Item nodes
 
 enum Item {
