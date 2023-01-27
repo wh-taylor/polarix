@@ -164,11 +164,16 @@ struct Token {
 }
 
 enum TokenContent {
+    // Literals and Identifiers
+    
     IntToken(isize),
     FloatToken(f64),
     StringToken(String),
     CharToken(char),
     Identifier(String),
+
+    // Keywords
+
     TrueKeyword,
     FalseKeyword,
     ImportKeyword,
@@ -197,22 +202,25 @@ enum TokenContent {
     ContinueKeyword,
     SuperKeyword,
     SelfKeyword,
-    Int8Keyword, // i8
-    Int16Keyword, // i16
-    Int32Keyword, // i32
-    Int64Keyword, // i64
-    Int128Keyword, // i128
-    IntSizeKeyword, // isize
-    UInt8Keyword, // u8
-    UInt16Keyword, // u16
-    UInt32Keyword, // u32
-    UInt64Keyword, // u64
-    UInt128Keyword, // u128
-    UIntSizeKeyword, // usize
-    Float32Keyword, // f32
-    Float64Keyword, // f64
+    I8Keyword, // i8
+    I16Keyword, // i16
+    I32Keyword, // i32
+    I64Keyword, // i64
+    I128Keyword, // i128
+    ISizeKeyword, // isize
+    U8Keyword, // u8
+    U16Keyword, // u16
+    U32Keyword, // u32
+    U64Keyword, // u64
+    U128Keyword, // u128
+    USizeKeyword, // usize
+    F32Keyword, // f32
+    F64Keyword, // f64
     BoolKeyword, // bool
     CharKeyword, // char
+
+    // Operators
+
     LeftCurlyBracketOperator, // {
     RightCurlyBracketOperator, // }
     LeftSquareBracketOperator, // [
@@ -225,7 +233,7 @@ enum TokenContent {
     EqualOperator, // =
     PipeOperator, // |
     DoubleEqualOperator, // ==
-    NotEqualOperator, // !=
+    BangEqualOperator, // !=
     LeftChevronOperator, // <
     RightChevronOperator, // >
     LeftChevronEqualOperator, // <=
@@ -241,6 +249,20 @@ enum TokenContent {
     CaretOperator, // ^
     AmpersandOperator // &
     TildeOperator // ~
+    DoubleLeftChevronEqualOperator, // <<=
+    DoubleRightChevronEqualOperator, // >>=
+    PlusEqualOperator, // +=
+    MinusEqualOperator, // -=
+    StarEqualOperator, // *=
+    SlashEqualOperator, // /=
+    PercentEqualOperator, // %=
+    DoubleStarEqualOperator, // **=
+    CaretEqualOperator, // ^=
+    AmpersandEqualOperator // &=
+    TildeEqualOperator // ~=
+    PipeEqualOperator, // |=
+    BangOperator, // !
+    DoubleBangOperator, // !!
     DotOperator, // .
     ScopeResolutionOperator, // ::
     DoubleArrowOperator, // =>
