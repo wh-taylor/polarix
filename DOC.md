@@ -23,6 +23,36 @@ through characters that match the specifications of the respective token type.
 These tokens are then returned to the parser alongside a potential error value
 one by one each time the lexer is told to iterate a new token.
 
+```rs
+struct Lexer {
+    code: String,
+    filename: String,
+    index: usize,
+    column: usize,
+    line: usize,
+}
+
+impl Lexer {
+    fn new(code: String, filename: String) {
+        Lexer {
+            code,
+            filename,
+            index: 0,
+            column: 0,
+            line: 0,
+        }
+    }
+}
+
+impl Iterator for Lexer {
+    type Item = Token;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        // get next token
+    }
+}
+```
+
 The lexer stores a structure containing the component's context which holds
 information regarding the exact location of each character such as index,
 column, line, file name and file text. This structure is referred to as a
