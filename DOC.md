@@ -27,6 +27,7 @@ one by one each time the lexer is told to iterate a new token.
 struct Lexer {
     code: String,
     filename: String,
+    chars: Iterator<String>,
     index: usize,
     column: usize,
     line: usize,
@@ -37,10 +38,25 @@ impl Lexer {
         Lexer {
             code,
             filename,
+            chars: code.chars(),
             index: 0,
             column: 0,
             line: 0,
         }
+    }
+
+    fn next_char(&mut self) -> Option<char> {
+        let current_char: char = self.chars.next()
+
+        if current_char == '\n' {
+            self.line += 1;
+            self.column = 0;
+        }
+
+        self.column += 1;
+        self.index += 1;
+
+        current_char
     }
 }
 
@@ -48,7 +64,18 @@ impl Iterator for Lexer {
     type Item = Token;
 
     fn next(&mut self) -> Option<Self::Item> {
-        // get next token
+        // Get next token
+        match self.next_char() {
+            Some(x) if x.is_whitespace() => {},
+            Some(x) if x.is_digit(10)    => self.lex_number(x),
+            Some(x) if x == '"'          => self.lex_string(),
+            Some(x) if x == '\''         => self.lex_char(),
+            Some(x) if
+                x.is_ascii_punctuation()
+                && x != '_'              => self.lex_operator(x),
+            Some(x)                      => self.lex_word(x),
+            None                         => None,
+        }
     }
 }
 ```
@@ -127,15 +154,7 @@ is labeled as a keyword; otherwise, it is labeled as an identifier.
 ```rs
 struct Token {
     content: TokenContent,
-    context: TokenContext,
-}
-
-struct TokenContext {
-    index: usize,
-    column: usize,
-    line: usize,
-    file_name: String,
-    file_text: String,
+    context: Box<Lexer>,
 }
 
 enum TokenContent {
