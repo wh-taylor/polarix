@@ -3,3 +3,8 @@ reference/
 
 .replit
 replit.nix
+
+
+# Added by cargo
+
+/target
