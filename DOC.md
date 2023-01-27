@@ -23,6 +23,11 @@ through characters that match the specifications of the respective token type.
 These tokens are then returned to the parser alongside a potential error value
 one by one each time the lexer is told to iterate a new token.
 
+The lexer will take a `ProgramContext` which will help clear up ambiguity in
+the lexing process, for example, to distinguish `>>` as one double-character
+token for the right bitshift operator from `>>` as two single-character tokens
+for nested types such as `Array<Array<i32>>`.
+
 ```rs
 struct Lexer {
     code: String,
@@ -31,6 +36,11 @@ struct Lexer {
     index: usize,
     column: usize,
     line: usize,
+}
+
+enum ProgramContext {
+    NormalContext,
+    TypeContext,
 }
 
 impl Lexer {
@@ -58,12 +68,8 @@ impl Lexer {
 
         current_char
     }
-}
 
-impl Iterator for Lexer {
-    type Item = Token;
-
-    fn next(&mut self) -> Option<Self::Item> {
+    fn next(&mut self, context: ProgramContext) -> Option<Self::Item> {
         // Get next token
         match self.next_char() {
             Some(x) if x.is_whitespace() => {},
@@ -72,7 +78,7 @@ impl Iterator for Lexer {
             Some(x) if x == '\''         => self.lex_char(),
             Some(x) if
                 x.is_ascii_punctuation()
-                && x != '_'              => self.lex_operator(x),
+                && x != '_'              => self.lex_operator(x, context),
             Some(x)                      => self.lex_word(x),
             None                         => None,
         }
