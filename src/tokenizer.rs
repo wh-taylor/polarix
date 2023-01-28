@@ -2,7 +2,7 @@ use std::{str::Chars, iter::Peekable};
 use crate::tokens::{Token, TokenContext, TokenContent};
 
 pub struct Tokenizer {
-    chars: Peekable<Chars<'static>>,
+    chars: Vec<char>,
     context: TokenContext,
 }
 
@@ -14,7 +14,7 @@ pub enum ProgramContext {
 impl Tokenizer {
     pub fn new(filename: String, code: &'static str) -> Tokenizer {
         Tokenizer {
-            chars: code.chars().peekable(),
+            chars: code.chars().collect(),
             context: TokenContext {
                 filename,
                 index: 0,
@@ -24,8 +24,22 @@ impl Tokenizer {
         }
     }
 
+    fn peek_char(&self) -> Option<char> {
+        match self.chars.get(self.context.index) {
+            Some(&ch) => Some(ch),
+            _         => None,
+        }
+    }
+
+    fn peek_chars(&self, forward: usize) -> Option<char> {
+        match self.chars.get(self.context.index + forward) {
+            Some(&ch) => Some(ch),
+            _         => None,
+        }
+    }
+
     fn next_char(&mut self) -> Option<char> {
-        let current_char: Option<char> = self.chars.next();
+        let current_char: Option<char> = self.peek_char();
 
         if let Some(ch) = current_char {
             if ch == '\n' {
@@ -51,15 +65,15 @@ impl Tokenizer {
         )
     }
 
-    fn next_chars_until(&mut self, f: impl Fn(&String, char, Option<&char>) -> bool) -> String {
+    fn next_chars_until(&mut self, f: impl Fn(&String, char, Option<char>) -> bool) -> String {
         let mut word: String = String::new();
 
-        while let Some(next_char) = self.chars.next() {
-            println!("{}", next_char);
-            if f(&word, next_char, self.chars.peek()) {
+        while let Some(ch) = self.peek_char() {
+            if f(&word, ch, self.peek_chars(1)) {
                 break;
             }
-            word.push(next_char);
+            word.push(ch);
+            self.next_char();
         }
 
         word
@@ -69,9 +83,9 @@ impl Tokenizer {
         let word = self.next_chars_until(|w, ch, next| {
             !ch.is_numeric() && ch != '_' && ch != '.'
                 || ch == '.' && w.contains('.')
-                || ch == '.' && matches!(next, Some(x) if !x.is_numeric() && *x != '_' && *x != '.')
+                || ch == '.' && matches!(next, Some(x) if !x.is_numeric() && x != '_' && x != '.')
         });
-        
+
         if word.contains('.') {
             self.contextual_token(TokenContent::FloatToken(word.parse::<f64>().unwrap()))
         } else {
@@ -107,14 +121,14 @@ impl Tokenizer {
 
     pub fn next(&mut self, context: ProgramContext) -> Option<Token> {
         // Get next token
-        match self.chars.peek() {
+        match self.peek_char() {
             Some(x) if x.is_whitespace() => { self.next_char(); self.next(context) },
             Some(x) if x.is_digit(10)    => self.lex_number(),
-            Some(x) if *x == '"'         => self.lex_string(),
-            Some(x) if *x == '\''        => self.lex_char(),
+            Some(x) if x == '"'          => self.lex_string(),
+            Some(x) if x == '\''         => self.lex_char(),
             Some(x) if
                 x.is_alphabetic()
-                || *x == '_'             => self.lex_word(),
+                || x == '_'              => self.lex_word(),
             Some(_)                      => self.lex_operator(context),
             None                         => None,
         }
