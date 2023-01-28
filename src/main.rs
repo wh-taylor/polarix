@@ -1,10 +1,18 @@
 mod tests;
 mod read_file;
+mod tokenizer;
+mod tokens;
 
 fn main() {
     let code = read_file::read_file("main.px".to_string());
 
     if let Err(error) = code {
         panic!("{}", error);
+    }
+
+    let mut tokenizer = tokenizer::Tokenizer::new("main.px".to_string(), "this is a test 2program");
+
+    while let Some(token) = tokenizer.next(tokenizer::ProgramContext::NormalContext) {
+        println!("{:?}", token.content);
     }
 }
