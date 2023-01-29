@@ -419,4 +419,106 @@ mod tests {
             Ok(Some(Token { content: TokenContent::LetKeyword, context: _ }))
         ));
     }
+
+    #[test]
+    fn lex_string() {
+        let mut tokenizer = tokenizer("test.px", "\"string\"");
+
+        assert!(matches!(
+            tokenizer.next(ProgramContext::NormalContext),
+            Ok(Some(Token { content: TokenContent::StringToken(x), context: _ }))
+                if x == "string".to_string()
+        ));
+    }
+
+    #[test]
+    fn lex_string_unclosed_eol() {
+        let mut tokenizer = tokenizer("test.px", "\"string");
+
+        assert!(matches!(
+            tokenizer.next(ProgramContext::NormalContext),
+            Err(TokenizerError {
+                error_type: TokenizerErrorType::UnclosedStringError,
+                context: _,
+            })
+        ));
+    }
+
+    #[test]
+    fn lex_string_unclosed_newline() {
+        let mut tokenizer = tokenizer("test.px", "\"string\nlet");
+
+        assert!(matches!(
+            tokenizer.next(ProgramContext::NormalContext),
+            Err(TokenizerError {
+                error_type: TokenizerErrorType::UnclosedStringError,
+                context: _,
+            })
+        ));
+
+        assert!(matches!(
+            tokenizer.next(ProgramContext::NormalContext),
+            Ok(Some(Token { content: TokenContent::LetKeyword, context: _ }))
+        ));
+    }
+
+    #[test]
+    fn lex_char() {
+        let mut tokenizer = tokenizer("test.px", "'c'");
+
+        assert!(matches!(
+            tokenizer.next(ProgramContext::NormalContext),
+            Ok(Some(Token { content: TokenContent::CharToken(x), context: _ }))
+                if x == 'c'
+        ));
+    }
+
+    #[test]
+    fn lex_char_unclosed_eol() {
+        let mut tokenizer = tokenizer("test.px", "'c");
+
+        assert!(matches!(
+            tokenizer.next(ProgramContext::NormalContext),
+            Err(TokenizerError {
+                error_type: TokenizerErrorType::UnclosedCharError,
+                context: _,
+            })
+        ));
+    }
+
+    #[test]
+    fn lex_char_unclosed_newline() {
+        let mut tokenizer = tokenizer("test.px", "'c\ntest");
+
+        assert!(matches!(
+            tokenizer.next(ProgramContext::NormalContext),
+            Err(TokenizerError {
+                error_type: TokenizerErrorType::UnclosedCharError,
+                context: _,
+            })
+        ));
+
+        assert!(matches!(
+            tokenizer.next(ProgramContext::NormalContext),
+            Ok(Some(Token { content: TokenContent::LetKeyword, context: _ }))
+        ));
+    }
+
+    #[test]
+    fn lex_char_overlengthy() {
+        let mut tokenizer = tokenizer("test.px", "'ch'let");
+
+        assert!(matches!(
+            tokenizer.next(ProgramContext::NormalContext),
+            Err(TokenizerError {
+                error_type: TokenizerErrorType::OverlengthyCharError,
+                context: _,
+            })
+        ));
+
+        assert!(matches!(
+            tokenizer.next(ProgramContext::NormalContext),
+            Ok(Some(Token { content: TokenContent::LetKeyword, context: _ }))
+        ));
+    }
 }
