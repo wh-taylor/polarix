@@ -13,6 +13,17 @@ pub enum ProgramContext {
     TypeContext,
 }
 
+pub struct TokenizerError {
+    error_type: TokenizerErrorType,
+    context: TokenContext,
+}
+
+pub enum TokenizerErrorType {
+    UnclosedStringError,
+    UnclosedCharError,
+    OverlengthyCharError,
+}
+
 impl Tokenizer {
     pub fn new(filename: String, code: &'static str) -> Tokenizer {
         Tokenizer {
@@ -137,9 +148,10 @@ impl Tokenizer {
     }
 
     pub fn next(&mut self, context: ProgramContext) -> Option<Token> {
+        // Skip whitespace
+        while self.peek_char()?.is_whitespace() { self.next_char(); }
         // Get next token
         match self.peek_char() {
-            Some(x) if x.is_whitespace() => { self.next_char(); self.next(context) },
             Some(x) if x.is_digit(10)    => self.lex_number(),
             Some(x) if x == '"'          => self.lex_string(),
             Some(x) if x == '\''         => self.lex_char(),
