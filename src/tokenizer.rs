@@ -239,7 +239,7 @@ mod tests {
         let mut tokenizer = tokenizer("test.px", "main");
 
         assert!(matches!(
-            tokenizer.lex_word(ProgramContext::NormalContext),
+            tokenizer.next(ProgramContext::NormalContext),
             Ok(Some(Token { content: TokenContent::Identifier(x), context: _ }))
                 if x == "main".to_string()
         ));
@@ -250,7 +250,7 @@ mod tests {
         let mut tokenizer = tokenizer("test.px", "+");
 
         assert!(matches!(
-            tokenizer.lex_operator(ProgramContext::NormalContext),
+            tokenizer.next(ProgramContext::NormalContext),
             Ok(Some(Token { content: TokenContent::PlusOperator, context: _ }))
         ));
     }
@@ -260,7 +260,7 @@ mod tests {
         let mut tokenizer = tokenizer("test.px", "+=");
 
         assert!(matches!(
-            tokenizer.lex_operator(ProgramContext::NormalContext),
+            tokenizer.next(ProgramContext::NormalContext),
             Ok(Some(Token { content: TokenContent::PlusEqualOperator, context: _ }))
         ));
     }
@@ -270,7 +270,7 @@ mod tests {
         let mut tokenizer = tokenizer("test.px", ">");
 
         assert!(matches!(
-            tokenizer.lex_operator(ProgramContext::NormalContext),
+            tokenizer.next(ProgramContext::NormalContext),
             Ok(Some(Token { content: TokenContent::RightChevronOperator, context: _ }))
         ));
     }
@@ -280,7 +280,7 @@ mod tests {
         let mut tokenizer = tokenizer("test.px", ">>");
 
         assert!(matches!(
-            tokenizer.lex_operator(ProgramContext::NormalContext),
+            tokenizer.next(ProgramContext::NormalContext),
             Ok(Some(Token { content: TokenContent::DoubleRightChevronOperator, context: _ }))
         ));
     }
@@ -290,12 +290,12 @@ mod tests {
         let mut tokenizer = tokenizer("test.px", ">>");
 
         assert!(matches!(
-            tokenizer.lex_operator(ProgramContext::TypeContext),
+            tokenizer.next(ProgramContext::TypeContext),
             Ok(Some(Token { content: TokenContent::RightChevronOperator, context: _ }))
         ));
 
         assert!(matches!(
-            tokenizer.lex_operator(ProgramContext::TypeContext),
+            tokenizer.next(ProgramContext::TypeContext),
             Ok(Some(Token { content: TokenContent::RightChevronOperator, context: _ }))
         ));
     }
@@ -306,7 +306,7 @@ mod tests {
         let mut tokenizer = tokenizer("test.px", "42");
 
         assert!(matches!(
-            tokenizer.lex_number(),
+            tokenizer.next(ProgramContext::NormalContext),
             Ok(Some(Token { content: TokenContent::IntToken(x), context: _ }))
                 if x == 42
         ));
@@ -317,7 +317,7 @@ mod tests {
         let mut tokenizer = tokenizer("test.px", "42.0");
 
         assert!(matches!(
-            tokenizer.lex_number(),
+            tokenizer.next(ProgramContext::NormalContext),
             Ok(Some(Token { content: TokenContent::FloatToken(x), context: _ }))
                 if x == 42.0
         ));
