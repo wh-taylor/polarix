@@ -2,7 +2,7 @@ use crate::tokens::{Token, TokenContext, TokenContent};
 
 const MAX_OPERATOR_LENGTH: usize = 3;
 
-pub struct Tokenizer {
+pub struct Lexer {
     chars: Vec<char>,
     context: TokenContext,
 }
@@ -13,13 +13,13 @@ pub enum ProgramContext {
     TypeContext,
 }
 
-pub struct TokenizerError {
-    error_type: TokenizerErrorType,
+pub struct LexerError {
+    error_type: LexerErrorType,
     context: TokenContext,
 }
 
 #[derive(Clone)]
-pub enum TokenizerErrorType {
+pub enum LexerErrorType {
     UnclosedStringError,
     UnclosedCharError,
     OverlengthyCharError,
@@ -27,18 +27,18 @@ pub enum TokenizerErrorType {
     UnknownTokenStartError,
 }
 
-impl TokenizerError {
-    fn new(error_type: TokenizerErrorType, context: TokenContext) -> TokenizerError {
-        TokenizerError { error_type, context }
+impl LexerError {
+    fn new(error_type: LexerErrorType, context: TokenContext) -> LexerError {
+        LexerError { error_type, context }
     }
 }
 
-pub type TokenizerResult = Result<Option<Token>, TokenizerError>;
-type TokenizerTokenResult = Result<Option<Token>, TokenizerErrorType>;
+pub type LexerResult = Result<Option<Token>, LexerError>;
+type LexerTokenResult = Result<Option<Token>, LexerErrorType>;
 
-impl Tokenizer {
-    pub fn new(filename: String, code: String) -> Tokenizer {
-        Tokenizer {
+impl Lexer {
+    pub fn new(filename: String, code: String) -> Lexer {
+        Lexer {
             chars: code.chars().collect(),
             context: TokenContext {
                 filename,
@@ -85,7 +85,7 @@ impl Tokenizer {
         self.next_char()
     }
 
-    fn contextual_token(&self, token: TokenContent) -> TokenizerTokenResult {
+    fn contextual_token(&self, token: TokenContent) -> LexerTokenResult {
         Ok(Some(Token::new(token, self.context.clone())))
     }
 
@@ -103,7 +103,7 @@ impl Tokenizer {
         word
     }
 
-    fn lex_number(&mut self) -> TokenizerTokenResult {
+    fn lex_number(&mut self) -> LexerTokenResult {
         let word = self.next_chars_until(|w, ch, next| {
             !ch.is_numeric() && ch != '_' && ch != '.'
                 || ch == '.' && w.contains('.')
@@ -117,7 +117,7 @@ impl Tokenizer {
         }
     }
 
-    fn lex_string(&mut self) -> TokenizerTokenResult{
+    fn lex_string(&mut self) -> LexerTokenResult{
         self.next_char();
         let word = self.next_chars_until(|_, ch, _| ch == '"' || ch == '\n');
 
@@ -126,11 +126,11 @@ impl Tokenizer {
                 self.next_char();
                 self.contextual_token(TokenContent::StringToken(word))
             },
-            _ => Err(TokenizerErrorType::UnclosedStringError),
+            _ => Err(LexerErrorType::UnclosedStringError),
         }
     }
 
-    fn lex_char(&mut self) -> TokenizerTokenResult {
+    fn lex_char(&mut self) -> LexerTokenResult {
         self.next_char();
         let word = self.next_chars_until(|_, ch, _| ch == '\'' || ch == '\n');
 
@@ -139,15 +139,15 @@ impl Tokenizer {
                 self.next_char();
                 match word.chars().collect::<Vec<char>>()[..] {
                     [c] => self.contextual_token(TokenContent::CharToken(c)),
-                    [] => Err(TokenizerErrorType::EmptyCharError),
-                    _ => Err(TokenizerErrorType::OverlengthyCharError),
+                    [] => Err(LexerErrorType::EmptyCharError),
+                    _ => Err(LexerErrorType::OverlengthyCharError),
                 }
             },
-            _ => Err(TokenizerErrorType::UnclosedCharError),
+            _ => Err(LexerErrorType::UnclosedCharError),
         }
     }
 
-    fn lex_operator(&mut self, context: ProgramContext) -> TokenizerTokenResult {
+    fn lex_operator(&mut self, context: ProgramContext) -> LexerTokenResult {
         for length in (1..=MAX_OPERATOR_LENGTH).rev() {
             let operator = self.chars.get(self.context.index..self.context.index + length);
             if let None = operator { continue; }
@@ -162,10 +162,10 @@ impl Tokenizer {
         while matches!(self.peek_char(), Some(ch) if ch.is_ascii_punctuation()) {
             self.next_char();
         }
-        Err(TokenizerErrorType::UnknownTokenStartError)
+        Err(LexerErrorType::UnknownTokenStartError)
     }
 
-    fn lex_word(&mut self, context: ProgramContext) -> TokenizerTokenResult {
+    fn lex_word(&mut self, context: ProgramContext) -> LexerTokenResult {
         let word = self.next_chars_until(|_, ch, _| !ch.is_alphanumeric() && ch != '_');
 
         match Token::string_to_token_content(word.clone(), &context) {
@@ -174,14 +174,14 @@ impl Tokenizer {
         }
     }
 
-    fn wrap_context(context: TokenContext, result: TokenizerTokenResult) -> TokenizerResult {
+    fn wrap_context(context: TokenContext, result: LexerTokenResult) -> LexerResult {
         match result {
             Ok(x) => Ok(x.clone()),
-            Err(x) => Err(TokenizerError::new(x.clone(), context)),
+            Err(x) => Err(LexerError::new(x.clone(), context)),
         }
     }
 
-    pub fn next(&mut self, program_context: ProgramContext) -> TokenizerResult {
+    pub fn next(&mut self, program_context: ProgramContext) -> LexerResult {
         // Skip whitespace
         while match self.peek_char() {
             Some(ch) => ch.is_whitespace(),
@@ -211,21 +211,21 @@ impl Tokenizer {
 mod tests {
     use super::*;
 
-    fn tokenizer(filename: &str, code: &str) -> Tokenizer {
-        Tokenizer::new(filename.to_string(), code.to_string())
+    fn lexer(filename: &str, code: &str) -> Lexer {
+        Lexer::new(filename.to_string(), code.to_string())
     }
 
     #[test]
-    fn new_tokenizer() {
-        let tokenizer = tokenizer("test.px", "test");
+    fn new_lexer() {
+        let lexer = lexer("test.px", "test");
 
         assert!(matches!(
-            tokenizer.chars[..],
+            lexer.chars[..],
             ['t', 'e', 's', 't']
         ));
 
         assert!(matches!(
-            tokenizer.context,
+            lexer.context,
             TokenContext { filename, index, column, line }
                 if filename == "test.px".to_string()
                 && index == 0
@@ -236,10 +236,10 @@ mod tests {
 
     #[test]
     fn lex_word_main_identifier() {
-        let mut tokenizer = tokenizer("test.px", "main");
+        let mut lexer = lexer("test.px", "main");
 
         assert!(matches!(
-            tokenizer.next(ProgramContext::NormalContext),
+            lexer.next(ProgramContext::NormalContext),
             Ok(Some(Token { content: TokenContent::Identifier(x), context: _ }))
                 if x == "main".to_string()
         ));
@@ -247,55 +247,55 @@ mod tests {
 
     #[test]
     fn lex_operator_plus() {
-        let mut tokenizer = tokenizer("test.px", "+");
+        let mut lexer = lexer("test.px", "+");
 
         assert!(matches!(
-            tokenizer.next(ProgramContext::NormalContext),
+            lexer.next(ProgramContext::NormalContext),
             Ok(Some(Token { content: TokenContent::PlusOperator, context: _ }))
         ));
     }
 
     #[test]
     fn lex_operator_plus_equal() {
-        let mut tokenizer = tokenizer("test.px", "+=");
+        let mut lexer = lexer("test.px", "+=");
 
         assert!(matches!(
-            tokenizer.next(ProgramContext::NormalContext),
+            lexer.next(ProgramContext::NormalContext),
             Ok(Some(Token { content: TokenContent::PlusEqualOperator, context: _ }))
         ));
     }
 
     #[test]
     fn lex_operator_one_gt() {
-        let mut tokenizer = tokenizer("test.px", ">");
+        let mut lexer = lexer("test.px", ">");
 
         assert!(matches!(
-            tokenizer.next(ProgramContext::NormalContext),
+            lexer.next(ProgramContext::NormalContext),
             Ok(Some(Token { content: TokenContent::RightChevronOperator, context: _ }))
         ));
     }
 
     #[test]
     fn lex_operator_two_gt_normal() {
-        let mut tokenizer = tokenizer("test.px", ">>");
+        let mut lexer = lexer("test.px", ">>");
 
         assert!(matches!(
-            tokenizer.next(ProgramContext::NormalContext),
+            lexer.next(ProgramContext::NormalContext),
             Ok(Some(Token { content: TokenContent::DoubleRightChevronOperator, context: _ }))
         ));
     }
 
     #[test]
     fn lex_operator_two_gt_type() {
-        let mut tokenizer = tokenizer("test.px", ">>");
+        let mut lexer = lexer("test.px", ">>");
 
         assert!(matches!(
-            tokenizer.next(ProgramContext::TypeContext),
+            lexer.next(ProgramContext::TypeContext),
             Ok(Some(Token { content: TokenContent::RightChevronOperator, context: _ }))
         ));
 
         assert!(matches!(
-            tokenizer.next(ProgramContext::TypeContext),
+            lexer.next(ProgramContext::TypeContext),
             Ok(Some(Token { content: TokenContent::RightChevronOperator, context: _ }))
         ));
     }
@@ -303,10 +303,10 @@ mod tests {
 
     #[test]
     fn lex_number_integer_42() {
-        let mut tokenizer = tokenizer("test.px", "42");
+        let mut lexer = lexer("test.px", "42");
 
         assert!(matches!(
-            tokenizer.next(ProgramContext::NormalContext),
+            lexer.next(ProgramContext::NormalContext),
             Ok(Some(Token { content: TokenContent::IntToken(x), context: _ }))
                 if x == 42
         ));
@@ -314,10 +314,10 @@ mod tests {
 
     #[test]
     fn lex_number_float_42() {
-        let mut tokenizer = tokenizer("test.px", "42.0");
+        let mut lexer = lexer("test.px", "42.0");
 
         assert!(matches!(
-            tokenizer.next(ProgramContext::NormalContext),
+            lexer.next(ProgramContext::NormalContext),
             Ok(Some(Token { content: TokenContent::FloatToken(x), context: _ }))
                 if x == 42.0
         ));
@@ -325,37 +325,37 @@ mod tests {
 
     #[test]
     fn lex_int_then_dot() {
-        let mut tokenizer = tokenizer("test.px", "42.");
+        let mut lexer = lexer("test.px", "42.");
 
         assert!(matches!(
-            tokenizer.next(ProgramContext::NormalContext),
+            lexer.next(ProgramContext::NormalContext),
             Ok(Some(Token { content: TokenContent::IntToken(x), context: _ }))
                 if x == 42
         ));
 
         assert!(matches!(
-            tokenizer.next(ProgramContext::NormalContext),
+            lexer.next(ProgramContext::NormalContext),
             Ok(Some(Token { content: TokenContent::DotOperator, context: _ }))
         ));
     }
 
     #[test]
     fn lex_int_then_field() {
-        let mut tokenizer = tokenizer("test.px", "42.a");
+        let mut lexer = lexer("test.px", "42.a");
 
         assert!(matches!(
-            tokenizer.next(ProgramContext::NormalContext),
+            lexer.next(ProgramContext::NormalContext),
             Ok(Some(Token { content: TokenContent::IntToken(x), context: _ }))
                 if x == 42
         ));
 
         assert!(matches!(
-            tokenizer.next(ProgramContext::NormalContext),
+            lexer.next(ProgramContext::NormalContext),
             Ok(Some(Token { content: TokenContent::DotOperator, context: _ }))
         ));
 
         assert!(matches!(
-            tokenizer.next(ProgramContext::NormalContext),
+            lexer.next(ProgramContext::NormalContext),
             Ok(Some(Token { content: TokenContent::Identifier(x), context: _ }))
                 if x == "a".to_string()
         ));
@@ -363,37 +363,37 @@ mod tests {
 
     #[test]
     fn lex_float_then_dot() {
-        let mut tokenizer = tokenizer("test.px", "42.0.");
+        let mut lexer = lexer("test.px", "42.0.");
 
         assert!(matches!(
-            tokenizer.next(ProgramContext::NormalContext),
+            lexer.next(ProgramContext::NormalContext),
             Ok(Some(Token { content: TokenContent::FloatToken(x), context: _ }))
                 if x == 42.0
         ));
 
         assert!(matches!(
-            tokenizer.next(ProgramContext::NormalContext),
+            lexer.next(ProgramContext::NormalContext),
             Ok(Some(Token { content: TokenContent::DotOperator, context: _ }))
         ));
     }
 
     #[test]
     fn lex_float_then_field() {
-        let mut tokenizer = tokenizer("test.px", "42.0.a");
+        let mut lexer = lexer("test.px", "42.0.a");
 
         assert!(matches!(
-            tokenizer.next(ProgramContext::NormalContext),
+            lexer.next(ProgramContext::NormalContext),
             Ok(Some(Token { content: TokenContent::FloatToken(x), context: _ }))
                 if x == 42.0
         ));
 
         assert!(matches!(
-            tokenizer.next(ProgramContext::NormalContext),
+            lexer.next(ProgramContext::NormalContext),
             Ok(Some(Token { content: TokenContent::DotOperator, context: _ }))
         ));
 
         assert!(matches!(
-            tokenizer.next(ProgramContext::NormalContext),
+            lexer.next(ProgramContext::NormalContext),
             Ok(Some(Token { content: TokenContent::Identifier(x), context: _ }))
                 if x == "a".to_string()
         ));
@@ -401,54 +401,54 @@ mod tests {
 
     #[test]
     fn lex_word_keyword() {
-        let mut tokenizer = tokenizer("test.px", "let");
+        let mut lexer = lexer("test.px", "let");
 
         assert!(matches!(
-            tokenizer.next(ProgramContext::NormalContext),
+            lexer.next(ProgramContext::NormalContext),
             Ok(Some(Token { content: TokenContent::LetKeyword, context: _ }))
         ));
     }
 
     #[test]
     fn lex_word_keyword_type() {
-        let mut tokenizer = tokenizer("test.px", "i32");
+        let mut lexer = lexer("test.px", "i32");
 
         assert!(matches!(
-            tokenizer.next(ProgramContext::TypeContext),
+            lexer.next(ProgramContext::TypeContext),
             Ok(Some(Token { content: TokenContent::I32Keyword, context: _ }))
         ));
     }
 
     #[test]
     fn lex_operator_unknown_start() {
-        let mut tokenizer = tokenizer("test.px", "$$ let");
+        let mut lexer = lexer("test.px", "$$ let");
 
         assert!(matches!(
-            tokenizer.next(ProgramContext::NormalContext),
-            Err(TokenizerError {
-                error_type: TokenizerErrorType::UnknownTokenStartError,
+            lexer.next(ProgramContext::NormalContext),
+            Err(LexerError {
+                error_type: LexerErrorType::UnknownTokenStartError,
                 context: _,
             })
         ));
 
         assert!(matches!(
-            tokenizer.next(ProgramContext::NormalContext),
+            lexer.next(ProgramContext::NormalContext),
             Ok(Some(Token { content: TokenContent::LetKeyword, context: _ }))
         ));
     }
 
     #[test]
     fn lex_string() {
-        let mut tokenizer = tokenizer("test.px", "\"string\"\"string2\"");
+        let mut lexer = lexer("test.px", "\"string\"\"string2\"");
 
         assert!(matches!(
-            tokenizer.next(ProgramContext::NormalContext),
+            lexer.next(ProgramContext::NormalContext),
             Ok(Some(Token { content: TokenContent::StringToken(x), context: _ }))
                 if x == "string".to_string()
         ));
 
         assert!(matches!(
-            tokenizer.next(ProgramContext::NormalContext),
+            lexer.next(ProgramContext::NormalContext),
             Ok(Some(Token { content: TokenContent::StringToken(x), context: _ }))
                 if x == "string2".to_string()
         ));
@@ -456,12 +456,12 @@ mod tests {
 
     #[test]
     fn lex_string_unclosed_eol() {
-        let mut tokenizer = tokenizer("test.px", "\"string");
+        let mut lexer = lexer("test.px", "\"string");
 
         assert!(matches!(
-            tokenizer.next(ProgramContext::NormalContext),
-            Err(TokenizerError {
-                error_type: TokenizerErrorType::UnclosedStringError,
+            lexer.next(ProgramContext::NormalContext),
+            Err(LexerError {
+                error_type: LexerErrorType::UnclosedStringError,
                 context: _,
             })
         ));
@@ -469,34 +469,34 @@ mod tests {
 
     #[test]
     fn lex_string_unclosed_newline() {
-        let mut tokenizer = tokenizer("test.px", "\"string\nlet");
+        let mut lexer = lexer("test.px", "\"string\nlet");
 
         assert!(matches!(
-            tokenizer.next(ProgramContext::NormalContext),
-            Err(TokenizerError {
-                error_type: TokenizerErrorType::UnclosedStringError,
+            lexer.next(ProgramContext::NormalContext),
+            Err(LexerError {
+                error_type: LexerErrorType::UnclosedStringError,
                 context: _,
             })
         ));
 
         assert!(matches!(
-            tokenizer.next(ProgramContext::NormalContext),
+            lexer.next(ProgramContext::NormalContext),
             Ok(Some(Token { content: TokenContent::LetKeyword, context: _ }))
         ));
     }
 
     #[test]
     fn lex_char() {
-        let mut tokenizer = tokenizer("test.px", "'c''d'");
+        let mut lexer = lexer("test.px", "'c''d'");
 
         assert!(matches!(
-            tokenizer.next(ProgramContext::NormalContext),
+            lexer.next(ProgramContext::NormalContext),
             Ok(Some(Token { content: TokenContent::CharToken(x), context: _ }))
                 if x == 'c'
         ));
 
         assert!(matches!(
-            tokenizer.next(ProgramContext::NormalContext),
+            lexer.next(ProgramContext::NormalContext),
             Ok(Some(Token { content: TokenContent::CharToken(x), context: _ }))
                 if x == 'd'
         ));
@@ -504,12 +504,12 @@ mod tests {
 
     #[test]
     fn lex_char_unclosed_eol() {
-        let mut tokenizer = tokenizer("test.px", "'c");
+        let mut lexer = lexer("test.px", "'c");
 
         assert!(matches!(
-            tokenizer.next(ProgramContext::NormalContext),
-            Err(TokenizerError {
-                error_type: TokenizerErrorType::UnclosedCharError,
+            lexer.next(ProgramContext::NormalContext),
+            Err(LexerError {
+                error_type: LexerErrorType::UnclosedCharError,
                 context: _,
             })
         ));
@@ -517,36 +517,36 @@ mod tests {
 
     #[test]
     fn lex_char_unclosed_newline() {
-        let mut tokenizer = tokenizer("test.px", "'c\nlet");
+        let mut lexer = lexer("test.px", "'c\nlet");
 
         assert!(matches!(
-            tokenizer.next(ProgramContext::NormalContext),
-            Err(TokenizerError {
-                error_type: TokenizerErrorType::UnclosedCharError,
+            lexer.next(ProgramContext::NormalContext),
+            Err(LexerError {
+                error_type: LexerErrorType::UnclosedCharError,
                 context: _,
             })
         ));
 
         assert!(matches!(
-            tokenizer.next(ProgramContext::NormalContext),
+            lexer.next(ProgramContext::NormalContext),
             Ok(Some(Token { content: TokenContent::LetKeyword, context: _ }))
         ));
     }
 
     #[test]
     fn lex_char_overlengthy() {
-        let mut tokenizer = tokenizer("test.px", "'ch'let");
+        let mut lexer = lexer("test.px", "'ch'let");
 
         assert!(matches!(
-            tokenizer.next(ProgramContext::NormalContext),
-            Err(TokenizerError {
-                error_type: TokenizerErrorType::OverlengthyCharError,
+            lexer.next(ProgramContext::NormalContext),
+            Err(LexerError {
+                error_type: LexerErrorType::OverlengthyCharError,
                 context: _,
             })
         ));
 
         assert!(matches!(
-            tokenizer.next(ProgramContext::NormalContext),
+            lexer.next(ProgramContext::NormalContext),
             Ok(Some(Token { content: TokenContent::LetKeyword, context: _ }))
         ));
     }

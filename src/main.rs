@@ -1,5 +1,5 @@
 mod read_file;
-mod tokenizer;
+mod lexer;
 mod tokens;
 
 fn main() {
@@ -9,9 +9,9 @@ fn main() {
         panic!("{}", error);
     }
 
-    let mut tokenizer = tokenizer::Tokenizer::new("main.px".to_string(), "this is a test $program".to_string());
+    let mut lexer = lexer::Lexer::new("main.px".to_string(), "this is a test $program".to_string());
 
-    while let Ok(Some(token)) = tokenizer.next(tokenizer::ProgramContext::NormalContext) {
+    while let Ok(Some(token)) = lexer.next(lexer::ProgramContext::NormalContext) {
         println!("{:?}", token.content);
     }
 }

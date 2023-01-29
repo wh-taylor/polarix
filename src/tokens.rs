@@ -1,5 +1,5 @@
 use TokenContent::*;
-use crate::tokenizer::ProgramContext;
+use crate::lexer::ProgramContext;
 
 #[derive(Clone)]
 pub struct Token {
