@@ -398,4 +398,22 @@ mod tests {
             Ok(Some(Token { content: TokenContent::I32Keyword, context: _ }))
         ));
     }
+
+    #[test]
+    fn lex_operator_unknown_start() {
+        let mut tokenizer = tokenizer("test.px", "$ let");
+
+        assert!(matches!(
+            tokenizer.next(ProgramContext::NormalContext),
+            Err(TokenizerError {
+                error_type: TokenizerErrorType::UnknownTokenStartError,
+                context: _,
+            })
+        ));
+
+        assert!(matches!(
+            tokenizer.next(ProgramContext::NormalContext),
+            Ok(Some(Token { content: TokenContent::LetKeyword, context: _ }))
+        ));
+    }
 }
