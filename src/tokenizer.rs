@@ -185,3 +185,196 @@ impl Tokenizer {
         Self::wrap_context(context, result)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn tokenizer(filename: &str, code: &str) -> Tokenizer {
+        Tokenizer::new(filename.to_string(), code.to_string())
+    }
+
+    #[test]
+    fn new_tokenizer() {
+        let tokenizer = tokenizer("test.px", "test");
+
+        assert!(matches!(
+            tokenizer.chars[..],
+            ['t', 'e', 's', 't']
+        ));
+
+        assert!(matches!(
+            tokenizer.context,
+            TokenContext { filename, index, column, line }
+                if filename == "test.px".to_string()
+                && index == 0
+                && column == 0
+                && line == 0
+        ));
+    }
+
+    #[test]
+    fn lex_word_main_identifier() {
+        let mut tokenizer = tokenizer("test.px", "main");
+
+        assert!(matches!(
+            tokenizer.lex_word(),
+            Ok(Some(Token { content: TokenContent::Identifier(x), context: _ }))
+                if x == "main".to_string()
+        ));
+    }
+
+    #[test]
+    fn lex_operator_plus() {
+        let mut tokenizer = tokenizer("test.px", "+");
+
+        assert!(matches!(
+            tokenizer.lex_operator(ProgramContext::NormalContext),
+            Ok(Some(Token { content: TokenContent::PlusOperator, context: _ }))
+        ));
+    }
+
+    #[test]
+    fn lex_operator_plus_equal() {
+        let mut tokenizer = tokenizer("test.px", "+=");
+
+        assert!(matches!(
+            tokenizer.lex_operator(ProgramContext::NormalContext),
+            Ok(Some(Token { content: TokenContent::PlusEqualOperator, context: _ }))
+        ));
+    }
+
+    #[test]
+    fn lex_operator_one_gt() {
+        let mut tokenizer = tokenizer("test.px", ">");
+
+        assert!(matches!(
+            tokenizer.lex_operator(ProgramContext::NormalContext),
+            Ok(Some(Token { content: TokenContent::RightChevronOperator, context: _ }))
+        ));
+    }
+
+    #[test]
+    fn lex_operator_two_gt_normal() {
+        let mut tokenizer = tokenizer("test.px", ">>");
+
+        assert!(matches!(
+            tokenizer.lex_operator(ProgramContext::NormalContext),
+            Ok(Some(Token { content: TokenContent::DoubleRightChevronOperator, context: _ }))
+        ));
+    }
+
+    #[test]
+    fn lex_operator_two_gt_type() {
+        let mut tokenizer = tokenizer("test.px", ">>");
+
+        assert!(matches!(
+            tokenizer.lex_operator(ProgramContext::TypeContext),
+            Ok(Some(Token { content: TokenContent::RightChevronOperator, context: _ }))
+        ));
+
+        assert!(matches!(
+            tokenizer.lex_operator(ProgramContext::TypeContext),
+            Ok(Some(Token { content: TokenContent::RightChevronOperator, context: _ }))
+        ));
+    }
+
+
+    #[test]
+    fn lex_number_integer_42() {
+        let mut tokenizer = tokenizer("test.px", "42");
+
+        assert!(matches!(
+            tokenizer.lex_number(),
+            Ok(Some(Token { content: TokenContent::IntToken(x), context: _ }))
+                if x == 42
+        ));
+    }
+
+    #[test]
+    fn lex_number_float_42() {
+        let mut tokenizer = tokenizer("test.px", "42.0");
+
+        assert!(matches!(
+            tokenizer.lex_number(),
+            Ok(Some(Token { content: TokenContent::FloatToken(x), context: _ }))
+                if x == 42.0
+        ));
+    }
+
+    #[test]
+    fn lex_int_then_dot() {
+        let mut tokenizer = tokenizer("test.px", "42.");
+
+        assert!(matches!(
+            tokenizer.next(ProgramContext::NormalContext),
+            Ok(Some(Token { content: TokenContent::IntToken(x), context: _ }))
+                if x == 42
+        ));
+
+        assert!(matches!(
+            tokenizer.next(ProgramContext::NormalContext),
+            Ok(Some(Token { content: TokenContent::DotOperator, context: _ }))
+        ));
+    }
+
+    #[test]
+    fn lex_int_then_field() {
+        let mut tokenizer = tokenizer("test.px", "42.a");
+
+        assert!(matches!(
+            tokenizer.next(ProgramContext::NormalContext),
+            Ok(Some(Token { content: TokenContent::IntToken(x), context: _ }))
+                if x == 42
+        ));
+
+        assert!(matches!(
+            tokenizer.next(ProgramContext::NormalContext),
+            Ok(Some(Token { content: TokenContent::DotOperator, context: _ }))
+        ));
+
+        assert!(matches!(
+            tokenizer.next(ProgramContext::NormalContext),
+            Ok(Some(Token { content: TokenContent::Identifier(x), context: _ }))
+                if x == "a".to_string()
+        ));
+    }
+
+    #[test]
+    fn lex_float_then_dot() {
+        let mut tokenizer = tokenizer("test.px", "42.0.");
+
+        assert!(matches!(
+            tokenizer.next(ProgramContext::NormalContext),
+            Ok(Some(Token { content: TokenContent::FloatToken(x), context: _ }))
+                if x == 42.0
+        ));
+
+        assert!(matches!(
+            tokenizer.next(ProgramContext::NormalContext),
+            Ok(Some(Token { content: TokenContent::DotOperator, context: _ }))
+        ));
+    }
+
+    #[test]
+    fn lex_float_then_field() {
+        let mut tokenizer = tokenizer("test.px", "42.0.a");
+
+        assert!(matches!(
+            tokenizer.next(ProgramContext::NormalContext),
+            Ok(Some(Token { content: TokenContent::FloatToken(x), context: _ }))
+                if x == 42.0
+        ));
+
+        assert!(matches!(
+            tokenizer.next(ProgramContext::NormalContext),
+            Ok(Some(Token { content: TokenContent::DotOperator, context: _ }))
+        ));
+
+        assert!(matches!(
+            tokenizer.next(ProgramContext::NormalContext),
+            Ok(Some(Token { content: TokenContent::Identifier(x), context: _ }))
+                if x == "a".to_string()
+        ));
+    }
+}
