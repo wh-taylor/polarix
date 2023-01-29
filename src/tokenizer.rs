@@ -145,12 +145,13 @@ impl Tokenizer {
         Err(TokenizerErrorType::UnknownTokenStartError)
     }
 
-    fn lex_word(&mut self) -> TokenizerTokenResult {
+    fn lex_word(&mut self, context: ProgramContext) -> TokenizerTokenResult {
         let word = self.next_chars_until(|_, ch, _| !ch.is_alphanumeric() && ch != '_');
 
-        // if a keyword is identified, return the corresponding keyword token
-
-        self.contextual_token(TokenContent::Identifier(word))
+        match Token::string_to_token_content(word.clone(), &context) {
+            Some(token_content) => self.contextual_token(token_content),
+            None => self.contextual_token(TokenContent::Identifier(word))
+        }
     }
 
     fn wrap_context(context: TokenContext, result: TokenizerTokenResult) -> TokenizerResult {
@@ -177,7 +178,7 @@ impl Tokenizer {
             Some(x) if x == '\''         => self.lex_char(),
             Some(x) if
                 x.is_alphabetic()
-                || x == '_'              => self.lex_word(),
+                || x == '_'              => self.lex_word(program_context),
             Some(_)                      => self.lex_operator(program_context),
             None                         => Ok(None),
         };
@@ -218,7 +219,7 @@ mod tests {
         let mut tokenizer = tokenizer("test.px", "main");
 
         assert!(matches!(
-            tokenizer.lex_word(),
+            tokenizer.lex_word(ProgramContext::NormalContext),
             Ok(Some(Token { content: TokenContent::Identifier(x), context: _ }))
                 if x == "main".to_string()
         ));
@@ -375,6 +376,26 @@ mod tests {
             tokenizer.next(ProgramContext::NormalContext),
             Ok(Some(Token { content: TokenContent::Identifier(x), context: _ }))
                 if x == "a".to_string()
+        ));
+    }
+
+    #[test]
+    fn lex_word_keyword() {
+        let mut tokenizer = tokenizer("test.px", "let");
+
+        assert!(matches!(
+            tokenizer.next(ProgramContext::NormalContext),
+            Ok(Some(Token { content: TokenContent::LetKeyword, context: _ }))
+        ));
+    }
+
+    #[test]
+    fn lex_word_keyword_type() {
+        let mut tokenizer = tokenizer("test.px", "i32");
+
+        assert!(matches!(
+            tokenizer.next(ProgramContext::TypeContext),
+            Ok(Some(Token { content: TokenContent::I32Keyword, context: _ }))
         ));
     }
 }
