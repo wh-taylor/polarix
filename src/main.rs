@@ -1,4 +1,3 @@
-mod tests;
 mod read_file;
 mod tokenizer;
 mod tokens;
