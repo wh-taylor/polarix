@@ -10,7 +10,7 @@ fn main() {
         panic!("{}", error);
     }
 
-    let mut tokenizer = tokenizer::Tokenizer::new("main.px".to_string(), "this is a test $program");
+    let mut tokenizer = tokenizer::Tokenizer::new("main.px".to_string(), "this is a test $program".to_string());
 
     while let Ok(Some(token)) = tokenizer.next(tokenizer::ProgramContext::NormalContext) {
         println!("{:?}", token.content);

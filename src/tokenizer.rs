@@ -1,4 +1,3 @@
-use std::{str::Chars, iter::Peekable};
 use crate::tokens::{Token, TokenContext, TokenContent};
 
 const MAX_OPERATOR_LENGTH: usize = 3;
@@ -8,6 +7,7 @@ pub struct Tokenizer {
     context: TokenContext,
 }
 
+#[derive(Clone)]
 pub enum ProgramContext {
     NormalContext,
     TypeContext,
@@ -32,7 +32,7 @@ impl TokenizerError {
     }
 }
 
-type TokenizerResult = Result<Option<Token>, TokenizerError>;
+pub type TokenizerResult = Result<Option<Token>, TokenizerError>;
 type TokenizerTokenResult = Result<Option<Token>, TokenizerErrorType>;
 
 impl Tokenizer {
