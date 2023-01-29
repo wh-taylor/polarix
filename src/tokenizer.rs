@@ -36,7 +36,7 @@ type TokenizerResult = Result<Option<Token>, TokenizerError>;
 type TokenizerTokenResult = Result<Option<Token>, TokenizerErrorType>;
 
 impl Tokenizer {
-    pub fn new(filename: String, code: &'static str) -> Tokenizer {
+    pub fn new(filename: String, code: String) -> Tokenizer {
         Tokenizer {
             chars: code.chars().collect(),
             context: TokenContext {
