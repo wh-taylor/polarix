@@ -1,6 +1,7 @@
 use TokenContent::*;
 use crate::tokenizer::ProgramContext;
 
+#[derive(Clone)]
 pub struct Token {
     pub content: TokenContent,
     pub context: TokenContext,
@@ -14,7 +15,7 @@ pub struct TokenContext {
     pub line: usize,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum TokenContent {
     // Literals and Identifiers
     
@@ -122,6 +123,13 @@ pub enum TokenContent {
 }
 
 impl Token {
+    pub fn new(content: TokenContent, context: TokenContext) -> Token {
+        Token {
+            content,
+            context,
+        }
+    }
+
     pub fn as_string(&self) -> String {
         match &self.content {
             IntToken(n)                     => n.to_string(),

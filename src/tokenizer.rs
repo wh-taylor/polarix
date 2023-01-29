@@ -18,11 +18,22 @@ pub struct TokenizerError {
     context: TokenContext,
 }
 
+#[derive(Clone)]
 pub enum TokenizerErrorType {
     UnclosedStringError,
     UnclosedCharError,
     OverlengthyCharError,
+    UnknownTokenStartError,
 }
+
+impl TokenizerError {
+    fn new(error_type: TokenizerErrorType, context: TokenContext) -> TokenizerError {
+        TokenizerError { error_type, context }
+    }
+}
+
+type TokenizerResult = Result<Option<Token>, TokenizerError>;
+type TokenizerTokenResult = Result<Option<Token>, TokenizerErrorType>;
 
 impl Tokenizer {
     pub fn new(filename: String, code: &'static str) -> Tokenizer {
@@ -73,13 +84,8 @@ impl Tokenizer {
         self.next_char()
     }
 
-    fn contextual_token(&self, token: TokenContent) -> Option<Token> {
-        Some(
-            Token {
-                content: token,
-                context: self.context.clone(),
-            }
-        )
+    fn contextual_token(&self, token: TokenContent) -> TokenizerTokenResult {
+        Ok(Some(Token::new(token, self.context.clone())))
     }
 
     fn next_chars_until(&mut self, f: impl Fn(&String, char, Option<char>) -> bool) -> String {
@@ -96,7 +102,7 @@ impl Tokenizer {
         word
     }
 
-    fn lex_number(&mut self) -> Option<Token> {
+    fn lex_number(&mut self) -> TokenizerTokenResult {
         let word = self.next_chars_until(|w, ch, next| {
             !ch.is_numeric() && ch != '_' && ch != '.'
                 || ch == '.' && w.contains('.')
@@ -110,21 +116,21 @@ impl Tokenizer {
         }
     }
 
-    fn lex_string(&mut self) -> Option<Token> {
+    fn lex_string(&mut self) -> TokenizerTokenResult{
         self.next_char();
         let word = self.next_chars_until(|_, ch, _| ch == '"');
 
         self.contextual_token(TokenContent::StringToken(word))
     }
 
-    fn lex_char(&mut self) -> Option<Token> {
+    fn lex_char(&mut self) -> TokenizerTokenResult {
         self.next_char();
         let word = self.next_chars_until(|_, ch, _| ch == '\'');
 
         self.contextual_token(TokenContent::CharToken(word.chars().nth(0).unwrap()))
     }
 
-    fn lex_operator(&mut self, context: ProgramContext) -> Option<Token> {
+    fn lex_operator(&mut self, context: ProgramContext) -> TokenizerTokenResult {
         for length in (1..=MAX_OPERATOR_LENGTH).rev() {
             let operator = self.chars.get(self.context.index..self.context.index + length);
             if let None = operator { continue; }
@@ -136,10 +142,10 @@ impl Tokenizer {
             return self.contextual_token(token_content.unwrap());
         }
 
-        None
+        Err(TokenizerErrorType::UnknownTokenStartError)
     }
 
-    fn lex_word(&mut self) -> Option<Token> {
+    fn lex_word(&mut self) -> TokenizerTokenResult {
         let word = self.next_chars_until(|_, ch, _| !ch.is_alphanumeric() && ch != '_');
 
         // if a keyword is identified, return the corresponding keyword token
@@ -147,19 +153,35 @@ impl Tokenizer {
         self.contextual_token(TokenContent::Identifier(word))
     }
 
-    pub fn next(&mut self, context: ProgramContext) -> Option<Token> {
+    fn wrap_context(context: TokenContext, result: TokenizerTokenResult) -> TokenizerResult {
+        match result {
+            Ok(x) => Ok(x.clone()),
+            Err(x) => Err(TokenizerError::new(x.clone(), context)),
+        }
+    }
+
+    pub fn next(&mut self, program_context: ProgramContext) -> TokenizerResult {
         // Skip whitespace
-        while self.peek_char()?.is_whitespace() { self.next_char(); }
+        while match self.peek_char() {
+            Some(ch) => ch.is_whitespace(),
+            None => { return Ok(None); },
+        } {
+            self.next_char();
+        }
         // Get next token
-        match self.peek_char() {
+        let context = self.context.clone();
+
+        let result = match self.peek_char() {
             Some(x) if x.is_digit(10)    => self.lex_number(),
             Some(x) if x == '"'          => self.lex_string(),
             Some(x) if x == '\''         => self.lex_char(),
             Some(x) if
                 x.is_alphabetic()
                 || x == '_'              => self.lex_word(),
-            Some(_)                      => self.lex_operator(context),
-            None                         => None,
-        }
+            Some(_)                      => self.lex_operator(program_context),
+            None                         => Ok(None),
+        };
+
+        Self::wrap_context(context, result)
     }
 }
