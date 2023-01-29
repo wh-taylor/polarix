@@ -106,7 +106,7 @@ impl Tokenizer {
         let word = self.next_chars_until(|w, ch, next| {
             !ch.is_numeric() && ch != '_' && ch != '.'
                 || ch == '.' && w.contains('.')
-                || ch == '.' && matches!(next, Some(x) if !x.is_numeric() && x != '_' && x != '.')
+                || ch == '.' && !matches!(next, Some(x) if x.is_numeric() || x == '_' || x == '.')
         });
 
         if word.contains('.') {
