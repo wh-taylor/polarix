@@ -439,7 +439,7 @@ mod tests {
 
     #[test]
     fn lex_string() {
-        let mut tokenizer = tokenizer("test.px", "\"string\" \"string2\"");
+        let mut tokenizer = tokenizer("test.px", "\"string\"\"string2\"");
 
         assert!(matches!(
             tokenizer.next(ProgramContext::NormalContext),
@@ -487,7 +487,7 @@ mod tests {
 
     #[test]
     fn lex_char() {
-        let mut tokenizer = tokenizer("test.px", "'c' 'd'");
+        let mut tokenizer = tokenizer("test.px", "'c''d'");
 
         assert!(matches!(
             tokenizer.next(ProgramContext::NormalContext),
