@@ -142,6 +142,9 @@ impl Tokenizer {
             return self.contextual_token(token_content.unwrap());
         }
 
+        while matches!(self.peek_char(), Some(ch) if ch.is_ascii_punctuation()) {
+            self.next_char();
+        }
         Err(TokenizerErrorType::UnknownTokenStartError)
     }
 
@@ -401,7 +404,7 @@ mod tests {
 
     #[test]
     fn lex_operator_unknown_start() {
-        let mut tokenizer = tokenizer("test.px", "$ let");
+        let mut tokenizer = tokenizer("test.px", "$$ let");
 
         assert!(matches!(
             tokenizer.next(ProgramContext::NormalContext),
