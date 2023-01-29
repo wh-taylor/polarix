@@ -1,6 +1,8 @@
 use std::{str::Chars, iter::Peekable};
 use crate::tokens::{Token, TokenContext, TokenContent};
 
+const MAX_OPERATOR_LENGTH: usize = 3;
+
 pub struct Tokenizer {
     chars: Vec<char>,
     context: TokenContext,
@@ -25,10 +27,7 @@ impl Tokenizer {
     }
 
     fn peek_char(&self) -> Option<char> {
-        match self.chars.get(self.context.index) {
-            Some(&ch) => Some(ch),
-            _         => None,
-        }
+        self.peek_chars(0)
     }
 
     fn peek_chars(&self, forward: usize) -> Option<char> {
@@ -54,6 +53,13 @@ impl Tokenizer {
         } else {
             None
         }
+    }
+
+    fn next_chars(&mut self, forward: usize) -> Option<char> {
+        for _ in 0..forward {
+            self.next_char();
+        }
+        self.next_char()
     }
 
     fn contextual_token(&self, token: TokenContent) -> Option<Token> {
@@ -108,7 +114,18 @@ impl Tokenizer {
     }
 
     fn lex_operator(&mut self, context: ProgramContext) -> Option<Token> {
-        self.contextual_token(TokenContent::PlusOperator)
+        for length in (1..=MAX_OPERATOR_LENGTH).rev() {
+            let operator = self.chars.get(self.context.index..self.context.index + length);
+            if let None = operator { continue; }
+
+            let token_content = Token::string_to_token_content(operator.unwrap().iter().collect(), &context);
+            if let None = token_content { continue; }
+
+            self.next_chars(length - 1);
+            return self.contextual_token(token_content.unwrap());
+        }
+
+        None
     }
 
     fn lex_word(&mut self) -> Option<Token> {

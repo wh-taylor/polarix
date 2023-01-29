@@ -122,7 +122,7 @@ pub enum TokenContent {
 }
 
 impl Token {
-    fn as_string(&self) -> String {
+    pub fn as_string(&self) -> String {
         match &self.content {
             IntToken(n)                     => n.to_string(),
             FloatToken(n)                   => n.to_string(),
@@ -222,7 +222,7 @@ impl Token {
         }
     }
 
-    fn string_to_token_content(s: String, context: ProgramContext) -> Option<TokenContent> {
+    pub fn string_to_token_content(s: String, context: &ProgramContext) -> Option<TokenContent> {
         match context {
             ProgramContext::NormalContext => match s.as_str() {
                 "true"       => Some(TrueKeyword),
