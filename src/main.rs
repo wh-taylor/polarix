@@ -3,6 +3,7 @@ mod tokens;
 mod lexer;
 mod nodes;
 mod parser;
+mod values;
 mod interpreter;
 
 fn main() {
