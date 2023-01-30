@@ -2,6 +2,7 @@ mod read_file;
 mod tokens;
 mod lexer;
 mod nodes;
+mod parser;
 
 fn main() {
     let code = read_file::read_file("main.px".to_string());

@@ -4,7 +4,7 @@ const MAX_OPERATOR_LENGTH: usize = 3;
 
 pub struct Lexer {
     chars: Vec<char>,
-    context: TokenContext,
+    pub context: TokenContext,
 }
 
 #[derive(Clone)]
@@ -14,8 +14,8 @@ pub enum ProgramContext {
 }
 
 pub struct LexerError {
-    error_type: LexerErrorType,
-    context: TokenContext,
+    pub error_type: LexerErrorType,
+    pub context: TokenContext,
 }
 
 #[derive(Clone)]

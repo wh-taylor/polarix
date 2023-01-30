@@ -1,4 +1,4 @@
-enum Item {
+pub enum Item {
     Import {
         imported: String,
     },
@@ -40,26 +40,26 @@ enum Item {
     },
 }
 
-struct FunctionHeader {
+pub struct FunctionHeader {
     name: String,
     parameters: Option<Vec<String>>,
     types: Vec<Type>,
     return_type: Type,
 }
 
-struct StructField {
+pub struct StructField {
     name: String,
     type_: Type,
 }
 
-struct EnumField {
+pub struct EnumField {
     name: String,
     types: Vec<Type>,
 }
 
 // Expression nodes
 
-enum Expression {
+pub enum Expression {
     ForExpression {
         pattern: Pattern,
         iterator: Box<Expression>,
@@ -155,26 +155,26 @@ enum Expression {
     },
 }
 
-struct Block {
+pub struct Block {
     statements: Vec<Statement>,
     expression: Box<Expression>,
 }
 
-struct MatchBranch {
+pub struct MatchBranch {
     pattern: Pattern,
     consequent: Expression,
 }
 
-struct StructExpressionField {
+pub struct StructExpressionField {
     name: String,
     expression: Expression,
 }
 
-struct Pattern {
+pub struct Pattern {
 
 }
 
-enum Operator {
+pub enum Operator {
     AddOperator,
     SubtractOperator,
     MultiplyOperator,
@@ -183,7 +183,7 @@ enum Operator {
     NegateOperator,
 }
 
-enum PathSegment {
+pub enum PathSegment {
     PathIdentifier {
         id: String
     },
@@ -193,7 +193,7 @@ enum PathSegment {
 
 // Statement nodes
 
-enum Statement {
+pub enum Statement {
     LetStatement {
         pattern: Pattern,
         expression: Expression,
@@ -207,7 +207,7 @@ enum Statement {
     },
 }
 
-enum Type {
+pub enum Type {
     Int8,
     Int16,
     Int32,
@@ -243,7 +243,7 @@ enum Type {
     },
 }
 
-enum Trait {
+pub enum Trait {
     Trait {
         name: String,
     },
