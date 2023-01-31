@@ -18,7 +18,7 @@ impl Lexer {
     //     Ok(items)
     // }
 
-    fn parse_expression(&mut self) -> Result<Expression, SyntaxErrorCollector> {
+    pub fn parse_expression(&mut self) -> Result<Expression, SyntaxErrorCollector> {
         self.parse_atom()
     }
 
