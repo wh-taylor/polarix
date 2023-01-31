@@ -23,14 +23,14 @@ impl Value {
     }
 }
 
-struct TreeWalker {
+pub struct TreeWalker {
     values: Vec<HashMap<String, Value>>,
     types: Vec<HashMap<String, Type>>,
     output: String,
 }
 
 impl TreeWalker {
-    fn new() -> TreeWalker {
+    pub fn new() -> TreeWalker {
         TreeWalker {
             values: Vec::new(),
             types: Vec::new(),
@@ -38,12 +38,12 @@ impl TreeWalker {
         }
     }
 
-    fn add_value(&mut self, name: String, value: Value) -> Option<()> {
+    pub fn add_value(&mut self, name: String, value: Value) -> Option<()> {
         self.values.last_mut()?.insert(name, value);
         Some(())
     }
 
-    fn get_value(&mut self, name: String) -> Option<&Value> {
+    pub fn get_value(&mut self, name: String) -> Option<&Value> {
         for scope in self.values.iter().rev() {
             let value = scope.get(&name);
             if value.is_some() { return value; }
@@ -51,12 +51,12 @@ impl TreeWalker {
         None
     }
 
-    fn add_type(&mut self, name: String, type_: Type) -> Option<()> {
+    pub fn add_type(&mut self, name: String, type_: Type) -> Option<()> {
         self.types.last_mut()?.insert(name, type_);
         Some(())
     }
 
-    fn get_type(&mut self, name: String) -> Option<&Type> {
+    pub fn get_type(&mut self, name: String) -> Option<&Type> {
         for scope in self.types.iter().rev() {
             let type_ = scope.get(&name);
             if type_.is_some() { return type_; }
@@ -64,17 +64,17 @@ impl TreeWalker {
         None
     }
 
-    fn scope_in(&mut self) {
+    pub fn scope_in(&mut self) {
         self.values.push(HashMap::new());
         self.types.push(HashMap::new());
     }
 
-    fn scope_out(&mut self) {
+    pub fn scope_out(&mut self) {
         self.values.pop();
         self.types.pop();
     }
 
-    fn write(&mut self, string: String) {
+    pub fn write(&mut self, string: String) {
         self.output += &string;
     }
 }

@@ -1,43 +1,8 @@
 use crate::lexer::*;
 use crate::nodes::*;
 use crate::tokens::Token;
-use crate::tokens::{TokenContext, TokenContent::*};
-
-pub struct SyntaxErrorCollector {
-    errors: Vec<SyntaxError>,
-}
-
-pub struct SyntaxError {
-    error_type: SyntaxErrorType,
-    context: TokenContext,
-}
-
-pub enum SyntaxErrorType {
-    LexerError(LexerErrorType),
-    AtomExpected,
-}
-
-impl SyntaxErrorCollector {
-    pub fn new() -> SyntaxErrorCollector {
-        SyntaxErrorCollector {
-            errors: Vec::new()
-        }
-    }
-
-    fn add_errors(&mut self, error_collector: SyntaxErrorCollector) {
-        self.errors.extend(error_collector.errors);
-    }
-
-    fn from_error(error_type: SyntaxErrorType, context: TokenContext) -> SyntaxErrorCollector {
-        let mut error_collector = Self::new();
-        error_collector.errors.push(SyntaxError { error_type, context });
-        error_collector
-    }
-
-    fn from_lexer_error(lexer_error: LexerError) -> SyntaxErrorCollector {
-        Self::from_error(SyntaxErrorType::LexerError(lexer_error.error_type), lexer_error.context)
-    }
-}
+use crate::tokens::TokenContent::*;
+use crate::syntax_errors::*;
 
 impl Lexer {
     // pub fn parse(&mut self) -> Result<Vec<Item>, SyntaxError> {

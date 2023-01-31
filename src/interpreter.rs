@@ -1,6 +1,6 @@
-use crate::parser::*;
 use crate::nodes::*;
 use crate::values::*;
+use crate::syntax_errors::*;
 
 fn interpret(tree: Result<Expression, SyntaxErrorCollector>) -> Result<Value, SyntaxErrorCollector> {
     interpret_expression(tree)

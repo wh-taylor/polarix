@@ -2,6 +2,7 @@ mod read_file;
 mod tokens;
 mod lexer;
 mod nodes;
+mod syntax_errors;
 mod parser;
 mod values;
 mod interpreter;
