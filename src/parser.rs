@@ -18,7 +18,7 @@ pub enum SyntaxErrorType {
 }
 
 impl SyntaxErrorCollector {
-    fn new() -> SyntaxErrorCollector {
+    pub fn new() -> SyntaxErrorCollector {
         SyntaxErrorCollector {
             errors: Vec::new()
         }

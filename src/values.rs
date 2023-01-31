@@ -1,12 +1,12 @@
 use std::collections::HashMap;
 use crate::nodes::*;
 
-struct Value {
+pub struct Value {
     type_: Type,
     value: ValueData,
 }
 
-enum ValueData {
+pub enum ValueData {
     IntegerValue(isize),
     FloatValue(f64),
     StringValue(String),
@@ -15,7 +15,7 @@ enum ValueData {
 }
 
 impl Value {
-    fn new(type_: Type, value: ValueData) -> Value {
+    pub fn new(type_: Type, value: ValueData) -> Value {
         Value {
             type_,
             value,
