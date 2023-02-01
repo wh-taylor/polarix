@@ -295,6 +295,94 @@ body of the program.
 The keywords above are actively searched for in the main function of the
 parser.
 
+### Grammar Definition
+
+```ebnf
+NOTATION:
+    { x } = x at least zero times
+    [ x ] = optional x
+    x | y = either x or y
+    { x }, = [ x { "," x } [ "," ] ] = x at least zero times, comma-separated
+    { x }; = [ x { ";" x } ";" ] = x at least zero times, semicolon-separated, semicolon final
+
+GRAMMAR:
+    program         = { top_item | item } EOF
+
+    top_item        = mod | trait | instance | test
+    mod             = "mod" ID ( ";" | "{" { top_item | item } "}" )
+    trait           = "trait" ID [ "<" { ID }, ">" ] "{" { item } "}"
+    instance        = "instance" ID [ "<" { ID }, ">" ] type "{" { item } "}"
+    test            = "test" ID block
+
+    item            = fn | struct | enum | type_alias | const_item | use
+    fn              = "fn" ID "(" { ID ":" type }, ")" [ ":" type ] ( [ "=" expression ] ";" | block )
+    struct          = "struct" ID [ "<" { ID }, ">" ] "{" { ID ":" type }, "}"
+    enum            = "enum" ID [ "<" { ID }, ">" ] "{" { ID [ "(" { type }, ")" ] } "}"
+    type_alias      = "type" ID "=" type ";"
+    const_item      = "const" ID "=" literal ";"
+    use             = "use" path ";"
+
+    statement       = expression | let | const
+    let             = "let" pattern "=" expression
+    const           = "const" pattern "=" expression
+
+    expression      = block | for | if | while | loop | match | return | break | continue | closure | assign
+    block           = "{" { statement }; [ expression ] "}"
+    for             = "for" pattern "in" expression block
+    if              = "if" expression block [ "else" ( if | block ) ]
+    while           = "while" expression block
+    loop            = "loop" block
+    match           = "match" expression "{" { pattern "=>" expression }, "}"
+    return          = "return" [ expression ]
+    break           = "break" [ expression ]
+    continue        = "continue"
+    closure         = "|" { ID ":" type }, "|" expression
+
+    assign          = try | ID assign_op expression
+    try             = [ "try" ] range
+    range           = or [ ( ".." | "..=" ) or ]
+    or              = and { "or" and }
+    and             = compare { "and" compare }
+    compare         = bitwise_or { ( "==" | "!=" | ">=" | "<=" | ">" | "<" ) bitwise_or }
+    bitwise_or      = bitwise_xor { "|" bitwise_xor }
+    bitwise_xor     = bitwise_and { "^" bitwise_and }
+    bitwise_and     = bitshift { "&" bitshift }
+    bitshift        = term { ( "<<" | ">>" ) term }
+    term            = factor { ( "+" | "-" | "+%" | "-%" ) factor }
+    factor          = exponent { ( "*" | "/" | "%" | "*%" ) exponent }
+    exponent        = cast { ( "**" | "**%" ) cast }
+    cast            = prefix [ ":" type ]
+    prefix          = { "not" | "~" | "-" | "-%" } dot
+    dot             = suffix { "." atom }
+    suffix          = call { "&" | "*" }
+    call            = path { "(" { expression }, ")" | "[" expression "]" }
+    path            = atom | { ID "::" } ID
+    atom            = ID | literal | "(" expression ")" | "[" { expression }, "]"
+    literal         = INT | FLOAT | CHAR | STR | "true" | "false"
+
+    type            = pointer | array | optional | result | id_type | primitive
+    pointer         = type "&"
+    array           = "[" type "]"
+    optional        = type "?"
+    result          = type "!"
+    id_type         = ID [ "<" { type }, ">" ]
+    primitive       = "i8"   | "i16" | "i32"  | "i64"  | "i128" | "isize"
+                    | "u8"   | "u16" | "u32"  | "u64"  | "u128" | "usize"
+                    | "f32"  | "f64" | "char" | "bool"
+    
+    pattern         = id_pattern  | enum_pattern  | struct_pattern | array_pattern
+                    | ref_pattern | blank_pattern | rest_pattern   | literal_pattern
+                    | "(" pattern ")"
+    id_pattern      = ID
+    enum_pattern    = ID "(" { pattern }, ")"
+    struct_pattern  = ID "{" { ID ":" pattern }, "}"
+    array_pattern   = "[" { pattern }, "]"
+    ref_pattern     = pattern "&"
+    blank_pattern   = "_"
+    rest_pattern    = "..."
+    literal_pattern = CHAR | STR | "true" | "false"
+```
+
 ### AST Nodes
 
 ```rs {filename="main.rs"}
