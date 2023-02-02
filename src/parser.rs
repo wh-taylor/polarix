@@ -1,4 +1,4 @@
-use crate::lexer::*;
+use crate::lexer::{*, ProgramContext::*};
 use crate::nodes::*;
 use crate::tokens::Token;
 
@@ -10,6 +10,8 @@ pub struct SyntaxError {
 pub enum SyntaxErrorType {
     LexerError(LexerErrorType),
     AtomExpected,
+    BlockExpected,
+    SemicolonExpected,
 }
 
 impl Lexer {
@@ -25,6 +27,36 @@ impl Lexer {
 
     //     Ok(items)
     // }
+
+    pub fn parse_block(&mut self) -> Result<Block, Vec<SyntaxError>> {
+        match self.next_token(NormalContext)? {
+            Token::LeftCurlyBracketOperator => {},
+            _ => return Err(self.error(SyntaxErrorType::BlockExpected)),
+        }
+
+        let mut statements = Vec::new();
+
+        loop {
+            if let Token::RightCurlyBracketOperator = self.next_token(NormalContext)? { break; }
+            let statement = self.parse_statement()?;
+            match self.next_token(NormalContext)? {
+                Token::SemicolonOperator => statements.push(statement),
+                Token::RightCurlyBracketOperator => match statement {
+                    Statement::ExpressionStatement { expression } => {
+                        return Ok(Block { statements, expression: Some(Box::new(expression)) })
+                    },
+                    _ => return Err(self.error(SyntaxErrorType::SemicolonExpected)),
+                }
+                _ => return Err(self.error(SyntaxErrorType::SemicolonExpected)),
+            }
+        }
+        
+        Ok(Block { statements, expression: None })
+    }
+
+    fn parse_statement(&mut self) -> Result<Statement, Vec<SyntaxError>> {
+        todo!()
+    }
 
     pub fn parse_expression(&mut self) -> Result<Expression, Vec<SyntaxError>> {
         self.parse_atom()

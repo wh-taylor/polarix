@@ -156,8 +156,8 @@ pub enum Expression {
 }
 
 pub struct Block {
-    statements: Vec<Statement>,
-    expression: Box<Expression>,
+    pub statements: Vec<Statement>,
+    pub expression: Option<Box<Expression>>,
 }
 
 pub struct MatchBranch {
