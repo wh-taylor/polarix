@@ -3,6 +3,7 @@ use Token::*;
 
 #[derive(Debug, Clone)]
 pub enum Token {
+    BOF,
     EOF,
 
     // Literals and Identifiers
@@ -113,6 +114,7 @@ pub enum Token {
 impl Token {
     pub fn as_string(&self) -> String {
         match &self {
+            BOF                             => String::from("BOF"),
             EOF                             => String::from("EOF"),
             IntToken(n)                     => n.to_string(),
             FloatToken(n)                   => n.to_string(),

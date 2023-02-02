@@ -5,6 +5,7 @@ const MAX_OPERATOR_LENGTH: usize = 3;
 
 pub struct Lexer {
     chars: Vec<char>,
+    last_token: Result<Token, LexerError>,
     pub context: LexerContext,
 }
 
@@ -22,6 +23,7 @@ pub enum ProgramContext {
     TypeContext,
 }
 
+#[derive(Clone)]
 pub struct LexerError {
     pub error_type: LexerErrorType,
     pub context: LexerContext,
@@ -46,6 +48,7 @@ impl Lexer {
     pub fn new(filename: String, code: String) -> Lexer {
         Lexer {
             chars: code.chars().collect(),
+            last_token: Ok(Token::BOF),
             context: LexerContext {
                 filename,
                 index: 0,
@@ -195,8 +198,6 @@ impl Lexer {
             self.next_char();
         }
         // Get next token
-        let context = self.context.clone();
-
         let result = match self.peek_char() {
             Some(x) if x.is_digit(10)    => self.lex_number(),
             Some(x) if x == '"'          => self.lex_string(),
@@ -208,7 +209,13 @@ impl Lexer {
             None                         => Ok(Token::EOF),
         };
 
+        self.last_token = result.clone();
+
         result
+    }
+
+    pub fn peek(&self) -> Result<Token, LexerError> {
+        self.last_token.clone()
     }
 }
 

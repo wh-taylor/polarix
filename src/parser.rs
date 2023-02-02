@@ -49,6 +49,13 @@ impl Lexer {
         }
     }
 
+    fn peek_token(&mut self) -> Result<Token, Vec<SyntaxError>> {
+        match self.peek() {
+            Ok(token) => Ok(token),
+            Err(lex_error) => Err(self.lexer_error(lex_error)),
+        }
+    }
+
     fn error(&self, error_type: SyntaxErrorType) -> Vec<SyntaxError> {
         let context = self.context.clone();
         vec![SyntaxError { error_type, context }]
