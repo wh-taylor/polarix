@@ -8,6 +8,7 @@ mod lexer;
 mod nodes;
 mod syntax_errors;
 mod parser;
+mod static_analyzer;
 mod values;
 mod interpreter;
 
