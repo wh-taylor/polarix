@@ -1,7 +1,16 @@
 use crate::lexer::*;
 use crate::nodes::*;
 use crate::tokens::Token;
-use crate::syntax_errors::*;
+
+pub struct SyntaxError {
+    pub error_type: SyntaxErrorType,
+    pub context: LexerContext,
+}
+
+pub enum SyntaxErrorType {
+    LexerError(LexerErrorType),
+    AtomExpected,
+}
 
 impl Lexer {
     // pub fn parse(&mut self) -> Result<Vec<Item>, SyntaxError> {
@@ -17,37 +26,38 @@ impl Lexer {
     //     Ok(items)
     // }
 
-    pub fn parse_expression(&mut self) -> Result<Expression, SyntaxErrorCollector> {
+    pub fn parse_expression(&mut self) -> Result<Expression, Vec<SyntaxError>> {
         self.parse_atom()
     }
 
-    fn parse_atom(&mut self) -> Result<Expression, SyntaxErrorCollector> {
-        match self.next(ProgramContext::NormalContext) {
-            Ok(Token::IntToken(int)) => {
-                Ok(Expression::IntLiteral { value: int })
-            },
-            Ok(Token::FloatToken(float)) => {
-                Ok(Expression::FloatLiteral { value: float })
-            },
-            Ok(Token::StringToken(float)) => {
-                Ok(Expression::StringLiteral { value: float })
-            },
-            Ok(Token::CharToken(float)) => {
-                Ok(Expression::CharLiteral { value: float })
-            },
-            Ok(Token::TrueKeyword) => {
-                Ok(Expression::BooleanLiteral { value: true })
-            },
-            Ok(Token::FalseKeyword) => {
-                Ok(Expression::BooleanLiteral { value: false })
-            },
-            Ok(_) => {
-                Err(SyntaxErrorCollector::from_error(SyntaxErrorType::AtomExpected, self.context.clone()))
-            },
-            Err(lex_error) => {
-                Err(SyntaxErrorCollector::from_lexer_error(lex_error))
-            },
+    fn parse_atom(&mut self) -> Result<Expression, Vec<SyntaxError>> {
+        match self.next_token(ProgramContext::NormalContext)? {
+            Token::IntToken(int)         => Ok(Expression::IntLiteral { value: int }),
+            Token::FloatToken(float)     => Ok(Expression::FloatLiteral { value: float }),
+            Token::StringToken(float)    => Ok(Expression::StringLiteral { value: float }),
+            Token::CharToken(float)      => Ok(Expression::CharLiteral { value: float }),
+            Token::TrueKeyword           => Ok(Expression::BooleanLiteral { value: true }),
+            Token::FalseKeyword          => Ok(Expression::BooleanLiteral { value: false }),
+            _                            => Err(self.error(SyntaxErrorType::AtomExpected)),
         }
+    }
+
+    fn next_token(&mut self, program_context: ProgramContext) -> Result<Token, Vec<SyntaxError>> {
+        match self.next(program_context) {
+            Ok(token) => Ok(token),
+            Err(lex_error) => Err(self.lexer_error(lex_error)),
+        }
+    }
+
+    fn error(&self, error_type: SyntaxErrorType) -> Vec<SyntaxError> {
+        let context = self.context.clone();
+        vec![SyntaxError { error_type, context }]
+    }
+
+    fn lexer_error(&self, lex_error: LexerError) -> Vec<SyntaxError> {
+        let error_type = SyntaxErrorType::LexerError(lex_error.error_type);
+        let context = lex_error.context;
+        vec![SyntaxError { error_type, context }]
     }
 }
 

@@ -1,16 +1,12 @@
 use clap::{Parser, Subcommand};
 use lexer::Lexer;
-use interpreter::TreeWalker;
 
 mod read_file;
 mod tokens;
 mod lexer;
 mod nodes;
-mod syntax_errors;
 mod parser;
 mod static_analyzer;
-mod values;
-mod interpreter;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -57,10 +53,4 @@ fn run(filename: String, no_warnings: bool) {
 
     let mut lexer = Lexer::new(filename, code);
     let tree = lexer.parse_expression();
-    
-    let mut tree_walker = TreeWalker::new();
-    
-    let result = tree_walker.interpret(tree);
-
-    println!("{}", tree_walker.output);
 }
