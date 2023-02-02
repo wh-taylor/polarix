@@ -1,22 +1,10 @@
-use TokenContent::*;
 use crate::lexer::ProgramContext;
-
-#[derive(Clone)]
-pub struct Token {
-    pub content: TokenContent,
-    pub context: TokenContext,
-}
-
-#[derive(Clone)]
-pub struct TokenContext {
-    pub filename: String,
-    pub index: usize,
-    pub column: usize,
-    pub line: usize,
-}
+use Token::*;
 
 #[derive(Debug, Clone)]
-pub enum TokenContent {
+pub enum Token {
+    EOF,
+
     // Literals and Identifiers
     
     IntToken(isize),
@@ -123,15 +111,9 @@ pub enum TokenContent {
 }
 
 impl Token {
-    pub fn new(content: TokenContent, context: TokenContext) -> Token {
-        Token {
-            content,
-            context,
-        }
-    }
-
     pub fn as_string(&self) -> String {
-        match &self.content {
+        match &self {
+            EOF                             => String::from("EOF"),
             IntToken(n)                     => n.to_string(),
             FloatToken(n)                   => n.to_string(),
             StringToken(string)             => string.clone(),
@@ -230,7 +212,7 @@ impl Token {
         }
     }
 
-    pub fn string_to_token_content(s: String, context: &ProgramContext) -> Option<TokenContent> {
+    pub fn string_to_token_content(s: String, context: &ProgramContext) -> Option<Token> {
         match context {
             ProgramContext::NormalContext => match s.as_str() {
                 "true"       => Some(TrueKeyword),

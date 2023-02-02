@@ -1,7 +1,6 @@
 use crate::lexer::*;
 use crate::nodes::*;
 use crate::tokens::Token;
-use crate::tokens::TokenContent::*;
 use crate::syntax_errors::*;
 
 impl Lexer {
@@ -24,22 +23,22 @@ impl Lexer {
 
     fn parse_atom(&mut self) -> Result<Expression, SyntaxErrorCollector> {
         match self.next(ProgramContext::NormalContext) {
-            Ok(Some(Token { content: IntToken(int), context: _ })) => {
+            Ok(Token::IntToken(int)) => {
                 Ok(Expression::IntLiteral { value: int })
             },
-            Ok(Some(Token { content: FloatToken(float), context: _ })) => {
+            Ok(Token::FloatToken(float)) => {
                 Ok(Expression::FloatLiteral { value: float })
             },
-            Ok(Some(Token { content: StringToken(float), context: _ })) => {
+            Ok(Token::StringToken(float)) => {
                 Ok(Expression::StringLiteral { value: float })
             },
-            Ok(Some(Token { content: CharToken(float), context: _ })) => {
+            Ok(Token::CharToken(float)) => {
                 Ok(Expression::CharLiteral { value: float })
             },
-            Ok(Some(Token { content: TrueKeyword, context: _ })) => {
+            Ok(Token::TrueKeyword) => {
                 Ok(Expression::BooleanLiteral { value: true })
             },
-            Ok(Some(Token { content: FalseKeyword, context: _ })) => {
+            Ok(Token::FalseKeyword) => {
                 Ok(Expression::BooleanLiteral { value: false })
             },
             Ok(_) => {

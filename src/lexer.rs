@@ -1,10 +1,19 @@
-use crate::tokens::{Token, TokenContext, TokenContent};
+use crate::tokens::Token;
+use LexerErrorType::*;
 
 const MAX_OPERATOR_LENGTH: usize = 3;
 
 pub struct Lexer {
     chars: Vec<char>,
-    pub context: TokenContext,
+    pub context: LexerContext,
+}
+
+#[derive(Clone)]
+pub struct LexerContext {
+    pub filename: String,
+    pub index: usize,
+    pub column: usize,
+    pub line: usize,
 }
 
 #[derive(Clone)]
@@ -15,7 +24,7 @@ pub enum ProgramContext {
 
 pub struct LexerError {
     pub error_type: LexerErrorType,
-    pub context: TokenContext,
+    pub context: LexerContext,
 }
 
 #[derive(Clone)]
@@ -28,19 +37,16 @@ pub enum LexerErrorType {
 }
 
 impl LexerError {
-    fn new(error_type: LexerErrorType, context: TokenContext) -> LexerError {
+    fn new(error_type: LexerErrorType, context: LexerContext) -> LexerError {
         LexerError { error_type, context }
     }
 }
-
-pub type LexerResult = Result<Option<Token>, LexerError>;
-type LexerTokenResult = Result<Option<Token>, LexerErrorType>;
 
 impl Lexer {
     pub fn new(filename: String, code: String) -> Lexer {
         Lexer {
             chars: code.chars().collect(),
-            context: TokenContext {
+            context: LexerContext {
                 filename,
                 index: 0,
                 column: 0,
@@ -85,9 +91,9 @@ impl Lexer {
         self.next_char()
     }
 
-    fn contextual_token(&self, token: TokenContent) -> LexerTokenResult {
-        Ok(Some(Token::new(token, self.context.clone())))
-    }
+    // fn contextual_token(&self, token: Token) -> LexerTokenResult {
+    //     Ok(Some(Token::new(token, self.context.clone())))
+    // }
 
     fn next_chars_until(&mut self, f: impl Fn(&String, char, Option<char>) -> bool) -> String {
         let mut word: String = String::new();
@@ -103,7 +109,7 @@ impl Lexer {
         word
     }
 
-    fn lex_number(&mut self) -> LexerTokenResult {
+    fn lex_number(&mut self) -> Result<Token, LexerError> {
         let word = self.next_chars_until(|w, ch, next| {
             !ch.is_numeric() && ch != '_' && ch != '.'
                 || ch == '.' && w.contains('.')
@@ -111,26 +117,30 @@ impl Lexer {
         });
 
         if word.contains('.') {
-            self.contextual_token(TokenContent::FloatToken(word.parse::<f64>().unwrap()))
+            Ok(Token::FloatToken(word.parse::<f64>().unwrap()))
         } else {
-            self.contextual_token(TokenContent::IntToken(word.parse::<isize>().unwrap()))
+            Ok(Token::IntToken(word.parse::<isize>().unwrap()))
         }
     }
 
-    fn lex_string(&mut self) -> LexerTokenResult{
+    fn lex_string(&mut self) -> Result<Token, LexerError> {
+        let context = self.context.clone();
+
         self.next_char();
         let word = self.next_chars_until(|_, ch, _| ch == '"' || ch == '\n');
 
         match self.peek_char() {
             Some(ch) if ch == '"' => {
                 self.next_char();
-                self.contextual_token(TokenContent::StringToken(word))
+                Ok(Token::StringToken(word))
             },
-            _ => Err(LexerErrorType::UnclosedStringError),
+            _ => Err(LexerError::new(UnclosedStringError, context)),
         }
     }
 
-    fn lex_char(&mut self) -> LexerTokenResult {
+    fn lex_char(&mut self) -> Result<Token, LexerError> {
+        let context = self.context.clone();
+
         self.next_char();
         let word = self.next_chars_until(|_, ch, _| ch == '\'' || ch == '\n');
 
@@ -138,54 +148,49 @@ impl Lexer {
             Some(ch) if ch == '\'' => {
                 self.next_char();
                 match word.chars().collect::<Vec<char>>()[..] {
-                    [c] => self.contextual_token(TokenContent::CharToken(c)),
-                    [] => Err(LexerErrorType::EmptyCharError),
-                    _ => Err(LexerErrorType::OverlengthyCharError),
+                    [c] => Ok(Token::CharToken(c)),
+                    [] => Err(LexerError::new(EmptyCharError, context)),
+                    _ => Err(LexerError::new(OverlengthyCharError, context)),
                 }
             },
-            _ => Err(LexerErrorType::UnclosedCharError),
+            _ => Err(LexerError::new(UnclosedCharError, context)),
         }
     }
 
-    fn lex_operator(&mut self, context: ProgramContext) -> LexerTokenResult {
+    fn lex_operator(&mut self, program_context: ProgramContext) -> Result<Token, LexerError> {
+        let context = self.context.clone();
+
         for length in (1..=MAX_OPERATOR_LENGTH).rev() {
             let operator = self.chars.get(self.context.index..self.context.index + length);
             if let None = operator { continue; }
 
-            let token_content = Token::string_to_token_content(operator.unwrap().iter().collect(), &context);
+            let token_content = Token::string_to_token_content(operator.unwrap().iter().collect(), &program_context);
             if let None = token_content { continue; }
 
             self.next_chars(length - 1);
-            return self.contextual_token(token_content.unwrap());
+            return Ok(token_content.unwrap());
         }
 
         while matches!(self.peek_char(), Some(ch) if ch.is_ascii_punctuation()) {
             self.next_char();
         }
-        Err(LexerErrorType::UnknownTokenStartError)
+        Err(LexerError::new(UnknownTokenStartError, context))
     }
 
-    fn lex_word(&mut self, context: ProgramContext) -> LexerTokenResult {
+    fn lex_word(&mut self, program_context: ProgramContext) -> Result<Token, LexerError> {
         let word = self.next_chars_until(|_, ch, _| !ch.is_alphanumeric() && ch != '_');
 
-        match Token::string_to_token_content(word.clone(), &context) {
-            Some(token_content) => self.contextual_token(token_content),
-            None => self.contextual_token(TokenContent::Identifier(word))
+        match Token::string_to_token_content(word.clone(), &program_context) {
+            Some(token_content) => Ok(token_content),
+            None => Ok(Token::Identifier(word))
         }
     }
 
-    fn wrap_context(context: TokenContext, result: LexerTokenResult) -> LexerResult {
-        match result {
-            Ok(x) => Ok(x.clone()),
-            Err(x) => Err(LexerError::new(x.clone(), context)),
-        }
-    }
-
-    pub fn next(&mut self, program_context: ProgramContext) -> LexerResult {
+    pub fn next(&mut self, program_context: ProgramContext) -> Result<Token, LexerError> {
         // Skip whitespace
         while match self.peek_char() {
             Some(ch) => ch.is_whitespace(),
-            None => { return Ok(None); },
+            None => { return Ok(Token::EOF); },
         } {
             self.next_char();
         }
@@ -200,10 +205,10 @@ impl Lexer {
                 x.is_alphabetic()
                 || x == '_'              => self.lex_word(program_context),
             Some(_)                      => self.lex_operator(program_context),
-            None                         => Ok(None),
+            None                         => Ok(Token::EOF),
         };
 
-        Self::wrap_context(context, result)
+        result
     }
 }
 
@@ -226,7 +231,7 @@ mod tests {
 
         assert!(matches!(
             lexer.context,
-            TokenContext { filename, index, column, line }
+            LexerContext { filename, index, column, line }
                 if filename == "test.px".to_string()
                 && index == 0
                 && column == 0
@@ -240,7 +245,7 @@ mod tests {
 
         assert!(matches!(
             lexer.next(ProgramContext::NormalContext),
-            Ok(Some(Token { content: TokenContent::Identifier(x), context: _ }))
+            Ok(Token::Identifier(x))
                 if x == "main".to_string()
         ));
     }
@@ -251,7 +256,7 @@ mod tests {
 
         assert!(matches!(
             lexer.next(ProgramContext::NormalContext),
-            Ok(Some(Token { content: TokenContent::PlusOperator, context: _ }))
+            Ok(Token::PlusOperator)
         ));
     }
 
@@ -261,7 +266,7 @@ mod tests {
 
         assert!(matches!(
             lexer.next(ProgramContext::NormalContext),
-            Ok(Some(Token { content: TokenContent::PlusEqualOperator, context: _ }))
+            Ok(Token::PlusEqualOperator),
         ));
     }
 
@@ -271,7 +276,7 @@ mod tests {
 
         assert!(matches!(
             lexer.next(ProgramContext::NormalContext),
-            Ok(Some(Token { content: TokenContent::RightChevronOperator, context: _ }))
+            Ok(Token::RightChevronOperator)
         ));
     }
 
@@ -281,7 +286,7 @@ mod tests {
 
         assert!(matches!(
             lexer.next(ProgramContext::NormalContext),
-            Ok(Some(Token { content: TokenContent::DoubleRightChevronOperator, context: _ }))
+            Ok(Token::DoubleRightChevronOperator)
         ));
     }
 
@@ -291,12 +296,12 @@ mod tests {
 
         assert!(matches!(
             lexer.next(ProgramContext::TypeContext),
-            Ok(Some(Token { content: TokenContent::RightChevronOperator, context: _ }))
+            Ok(Token::RightChevronOperator)
         ));
 
         assert!(matches!(
             lexer.next(ProgramContext::TypeContext),
-            Ok(Some(Token { content: TokenContent::RightChevronOperator, context: _ }))
+            Ok(Token::RightChevronOperator)
         ));
     }
 
@@ -307,7 +312,7 @@ mod tests {
 
         assert!(matches!(
             lexer.next(ProgramContext::NormalContext),
-            Ok(Some(Token { content: TokenContent::IntToken(x), context: _ }))
+            Ok(Token::IntToken(x))
                 if x == 42
         ));
     }
@@ -318,7 +323,7 @@ mod tests {
 
         assert!(matches!(
             lexer.next(ProgramContext::NormalContext),
-            Ok(Some(Token { content: TokenContent::FloatToken(x), context: _ }))
+            Ok(Token::FloatToken(x))
                 if x == 42.0
         ));
     }
@@ -329,13 +334,13 @@ mod tests {
 
         assert!(matches!(
             lexer.next(ProgramContext::NormalContext),
-            Ok(Some(Token { content: TokenContent::IntToken(x), context: _ }))
+            Ok(Token::IntToken(x))
                 if x == 42
         ));
 
         assert!(matches!(
             lexer.next(ProgramContext::NormalContext),
-            Ok(Some(Token { content: TokenContent::DotOperator, context: _ }))
+            Ok(Token::DotOperator)
         ));
     }
 
@@ -345,18 +350,18 @@ mod tests {
 
         assert!(matches!(
             lexer.next(ProgramContext::NormalContext),
-            Ok(Some(Token { content: TokenContent::IntToken(x), context: _ }))
+            Ok(Token::IntToken(x))
                 if x == 42
         ));
 
         assert!(matches!(
             lexer.next(ProgramContext::NormalContext),
-            Ok(Some(Token { content: TokenContent::DotOperator, context: _ }))
+            Ok(Token::DotOperator)
         ));
 
         assert!(matches!(
             lexer.next(ProgramContext::NormalContext),
-            Ok(Some(Token { content: TokenContent::Identifier(x), context: _ }))
+            Ok(Token::Identifier(x))
                 if x == "a".to_string()
         ));
     }
@@ -367,13 +372,13 @@ mod tests {
 
         assert!(matches!(
             lexer.next(ProgramContext::NormalContext),
-            Ok(Some(Token { content: TokenContent::FloatToken(x), context: _ }))
+            Ok(Token::FloatToken(x))
                 if x == 42.0
         ));
 
         assert!(matches!(
             lexer.next(ProgramContext::NormalContext),
-            Ok(Some(Token { content: TokenContent::DotOperator, context: _ }))
+            Ok(Token::DotOperator)
         ));
     }
 
@@ -383,18 +388,18 @@ mod tests {
 
         assert!(matches!(
             lexer.next(ProgramContext::NormalContext),
-            Ok(Some(Token { content: TokenContent::FloatToken(x), context: _ }))
+            Ok(Token::FloatToken(x))
                 if x == 42.0
         ));
 
         assert!(matches!(
             lexer.next(ProgramContext::NormalContext),
-            Ok(Some(Token { content: TokenContent::DotOperator, context: _ }))
+            Ok(Token::DotOperator)
         ));
 
         assert!(matches!(
             lexer.next(ProgramContext::NormalContext),
-            Ok(Some(Token { content: TokenContent::Identifier(x), context: _ }))
+            Ok(Token::Identifier(x))
                 if x == "a".to_string()
         ));
     }
@@ -405,7 +410,7 @@ mod tests {
 
         assert!(matches!(
             lexer.next(ProgramContext::NormalContext),
-            Ok(Some(Token { content: TokenContent::LetKeyword, context: _ }))
+            Ok(Token::LetKeyword)
         ));
     }
 
@@ -415,7 +420,7 @@ mod tests {
 
         assert!(matches!(
             lexer.next(ProgramContext::TypeContext),
-            Ok(Some(Token { content: TokenContent::I32Keyword, context: _ }))
+            Ok(Token::I32Keyword)
         ));
     }
 
@@ -426,14 +431,14 @@ mod tests {
         assert!(matches!(
             lexer.next(ProgramContext::NormalContext),
             Err(LexerError {
-                error_type: LexerErrorType::UnknownTokenStartError,
+                error_type: UnknownTokenStartError,
                 context: _,
             })
         ));
 
         assert!(matches!(
             lexer.next(ProgramContext::NormalContext),
-            Ok(Some(Token { content: TokenContent::LetKeyword, context: _ }))
+            Ok(Token::LetKeyword)
         ));
     }
 
@@ -443,13 +448,13 @@ mod tests {
 
         assert!(matches!(
             lexer.next(ProgramContext::NormalContext),
-            Ok(Some(Token { content: TokenContent::StringToken(x), context: _ }))
+            Ok(Token::StringToken(x))
                 if x == "string".to_string()
         ));
 
         assert!(matches!(
             lexer.next(ProgramContext::NormalContext),
-            Ok(Some(Token { content: TokenContent::StringToken(x), context: _ }))
+            Ok(Token::StringToken(x))
                 if x == "string2".to_string()
         ));
     }
@@ -461,7 +466,7 @@ mod tests {
         assert!(matches!(
             lexer.next(ProgramContext::NormalContext),
             Err(LexerError {
-                error_type: LexerErrorType::UnclosedStringError,
+                error_type: UnclosedStringError,
                 context: _,
             })
         ));
@@ -474,14 +479,14 @@ mod tests {
         assert!(matches!(
             lexer.next(ProgramContext::NormalContext),
             Err(LexerError {
-                error_type: LexerErrorType::UnclosedStringError,
+                error_type: UnclosedStringError,
                 context: _,
             })
         ));
 
         assert!(matches!(
             lexer.next(ProgramContext::NormalContext),
-            Ok(Some(Token { content: TokenContent::LetKeyword, context: _ }))
+            Ok(Token::LetKeyword)
         ));
     }
 
@@ -491,13 +496,13 @@ mod tests {
 
         assert!(matches!(
             lexer.next(ProgramContext::NormalContext),
-            Ok(Some(Token { content: TokenContent::CharToken(x), context: _ }))
+            Ok(Token::CharToken(x))
                 if x == 'c'
         ));
 
         assert!(matches!(
             lexer.next(ProgramContext::NormalContext),
-            Ok(Some(Token { content: TokenContent::CharToken(x), context: _ }))
+            Ok(Token::CharToken(x))
                 if x == 'd'
         ));
     }
@@ -509,7 +514,7 @@ mod tests {
         assert!(matches!(
             lexer.next(ProgramContext::NormalContext),
             Err(LexerError {
-                error_type: LexerErrorType::UnclosedCharError,
+                error_type: UnclosedCharError,
                 context: _,
             })
         ));
@@ -522,14 +527,14 @@ mod tests {
         assert!(matches!(
             lexer.next(ProgramContext::NormalContext),
             Err(LexerError {
-                error_type: LexerErrorType::UnclosedCharError,
+                error_type: UnclosedCharError,
                 context: _,
             })
         ));
 
         assert!(matches!(
             lexer.next(ProgramContext::NormalContext),
-            Ok(Some(Token { content: TokenContent::LetKeyword, context: _ }))
+            Ok(Token::LetKeyword)
         ));
     }
 
@@ -540,14 +545,14 @@ mod tests {
         assert!(matches!(
             lexer.next(ProgramContext::NormalContext),
             Err(LexerError {
-                error_type: LexerErrorType::OverlengthyCharError,
+                error_type: OverlengthyCharError,
                 context: _,
             })
         ));
 
         assert!(matches!(
             lexer.next(ProgramContext::NormalContext),
-            Ok(Some(Token { content: TokenContent::LetKeyword, context: _ }))
+            Ok(Token::LetKeyword)
         ));
     }
 }

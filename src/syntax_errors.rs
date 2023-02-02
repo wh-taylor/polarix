@@ -1,5 +1,4 @@
 use crate::lexer::*;
-use crate::tokens::TokenContext;
 
 pub struct SyntaxErrorCollector {
     errors: Vec<SyntaxError>,
@@ -7,7 +6,7 @@ pub struct SyntaxErrorCollector {
 
 pub struct SyntaxError {
     error_type: SyntaxErrorType,
-    context: TokenContext,
+    context: LexerContext,
 }
 
 pub enum SyntaxErrorType {
@@ -26,7 +25,7 @@ impl SyntaxErrorCollector {
         self.errors.extend(error_collector.errors);
     }
 
-    pub fn from_error(error_type: SyntaxErrorType, context: TokenContext) -> SyntaxErrorCollector {
+    pub fn from_error(error_type: SyntaxErrorType, context: LexerContext) -> SyntaxErrorCollector {
         let mut error_collector = Self::new();
         error_collector.errors.push(SyntaxError { error_type, context });
         error_collector
