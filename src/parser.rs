@@ -10,6 +10,8 @@ pub struct SyntaxError {
 pub enum SyntaxErrorType {
     LexerError(LexerErrorType),
     AtomExpected,
+    ClosingBracketExpected,
+    TypeExpected,
     BlockExpected,
     SemicolonExpected,
 }
@@ -58,20 +60,76 @@ impl Lexer {
         todo!()
     }
 
-    pub fn parse_expression(&mut self) -> Result<Expression, Vec<SyntaxError>> {
+    fn parse_expression(&mut self) -> Result<Expression, Vec<SyntaxError>> {
         self.parse_atom()
     }
 
     fn parse_atom(&mut self) -> Result<Expression, Vec<SyntaxError>> {
-        match self.next_token(ProgramContext::NormalContext)? {
+        match self.next_token(NormalContext)? {
             Token::IntToken(int)         => Ok(Expression::IntLiteral { value: int }),
             Token::FloatToken(float)     => Ok(Expression::FloatLiteral { value: float }),
-            Token::StringToken(float)    => Ok(Expression::StringLiteral { value: float }),
-            Token::CharToken(float)      => Ok(Expression::CharLiteral { value: float }),
+            Token::StringToken(string)   => Ok(Expression::StringLiteral { value: string }),
+            Token::CharToken(char)       => Ok(Expression::CharLiteral { value: char }),
+            Token::Identifier(id)        => Ok(Expression::Variable { name: id }),
             Token::TrueKeyword           => Ok(Expression::BooleanLiteral { value: true }),
             Token::FalseKeyword          => Ok(Expression::BooleanLiteral { value: false }),
             _                            => Err(self.error(SyntaxErrorType::AtomExpected)),
         }
+    }
+
+    fn parse_type_atom(&mut self) -> Result<Type, Vec<SyntaxError>> {
+        match self.next_token(TypeContext)? {
+            Token::I8Keyword => Ok(Type::Int8),
+            Token::I16Keyword => Ok(Type::Int16), // i16
+            Token::I32Keyword => Ok(Type::Int32), // i32
+            Token::I64Keyword => Ok(Type::Int64), // i64
+            Token::I128Keyword => Ok(Type::Int128), // i128
+            Token::ISizeKeyword => Ok(Type::IntSize), // isize
+            Token::U8Keyword => Ok(Type::UInt8), // u8
+            Token::U16Keyword => Ok(Type::UInt16), // u16
+            Token::U32Keyword => Ok(Type::UInt32), // u32
+            Token::U64Keyword => Ok(Type::UInt64), // u64
+            Token::U128Keyword => Ok(Type::UInt128), // u128
+            Token::USizeKeyword => Ok(Type::UIntSize), // usize
+            Token::F32Keyword => Ok(Type::Float32), // f32
+            Token::F64Keyword => Ok(Type::Float64), // f64
+            Token::BoolKeyword => Ok(Type::Boolean), // bool
+            Token::CharKeyword => Ok(Type::Char), // char
+            Token::Identifier(id) => Ok(Type::Type { name: id }),
+            _ => Err(self.error(SyntaxErrorType::TypeExpected)),
+        }
+    }
+
+    fn parse_type(&mut self) -> Result<Type, Vec<SyntaxError>> {
+        let mut type_ = self.parse_type_atom()?;
+        loop {
+            match self.next_token(TypeContext)? {
+                Token::AmpersandOperator => type_ = Type::Pointer { pointed: Box::new(type_) },
+                Token::QuestionOperator => type_ = Type::GenericType { name: String::from("Option"), types: vec![type_] },
+                Token::PipeOperator => {
+                    let type2 = self.parse_type()?;
+                    type_ = Type::GenericType { name: "Result".to_string(), types: vec![type_, type2] }
+                },
+                Token::LeftSquareBracketOperator => {
+                    self.next_token(TypeContext)?; // unsure, test this later
+                    let inner_type = self.parse_type()?;
+                    match self.next_token(TypeContext)? {
+                        Token::SemicolonOperator => {},
+                        _ => return Err(self.error(SyntaxErrorType::ClosingBracketExpected)),
+                    }
+                    let match self.next_token(TypeContext)? {
+                        Token::IntToken(int) => 
+                    }
+                    match self.next_token(TypeContext)? {
+                        Token::RightSquareBracketOperator => {},
+                        _ => return Err(self.error(SyntaxErrorType::ClosingBracketExpected)),
+                    }
+                    type_ = Type::Array { type_: inner_type, length: () }
+                }
+                _ => break,
+            }
+        }
+        Ok(type_)
     }
 
     fn next_token(&mut self, program_context: ProgramContext) -> Result<Token, Vec<SyntaxError>> {

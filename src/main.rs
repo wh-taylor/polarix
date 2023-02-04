@@ -52,5 +52,5 @@ fn run(filename: String, no_warnings: bool) {
     let code: String = code_result.unwrap();
 
     let mut lexer = Lexer::new(filename, code);
-    let tree = lexer.parse_expression();
+    // let tree = lexer.parse_expression();
 }
