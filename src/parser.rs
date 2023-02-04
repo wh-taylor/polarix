@@ -97,6 +97,7 @@ impl Lexer {
             Token::CharKeyword => Ok(Type::Char),
             Token::Identifier(id) => Ok(Type::Type { name: id }),
             Token::LeftSquareBracketOperator => {
+                self.next_token(TypeContext)?;
                 let inner_type = self.parse_type()?;
 
                 match self.current_token()? {
