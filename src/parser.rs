@@ -31,7 +31,7 @@ impl Lexer {
     // }
 
     pub fn parse_block(&mut self) -> Result<Block, Vec<SyntaxError>> {
-        match self.peek_token()? {
+        match self.current_token()? {
             Token::LeftCurlyBracketOperator => {},
             _ => return Err(self.error(SyntaxErrorType::BlockExpected)),
         }
@@ -65,7 +65,7 @@ impl Lexer {
     }
 
     fn parse_atom(&mut self) -> Result<Expression, Vec<SyntaxError>> {
-        match self.peek_token()? {
+        match self.current_token()? {
             Token::IntToken(int)         => Ok(Expression::IntLiteral { value: int }),
             Token::FloatToken(float)     => Ok(Expression::FloatLiteral { value: float }),
             Token::StringToken(string)   => Ok(Expression::StringLiteral { value: string }),
@@ -78,7 +78,7 @@ impl Lexer {
     }
 
     fn parse_type_atom(&mut self) -> Result<Type, Vec<SyntaxError>> {
-        match self.peek_token()? {
+        match self.current_token()? {
             Token::I8Keyword => Ok(Type::Int8),
             Token::I16Keyword => Ok(Type::Int16),
             Token::I32Keyword => Ok(Type::Int32),
@@ -99,7 +99,7 @@ impl Lexer {
             Token::LeftSquareBracketOperator => {
                 let inner_type = self.parse_type()?;
 
-                match self.peek_token()? {
+                match self.current_token()? {
                     Token::SemicolonOperator => {},
                     _ => return Err(self.error(SyntaxErrorType::SemicolonExpected)),
                 }
@@ -145,12 +145,12 @@ impl Lexer {
 
                     self.next_token(TypeContext)?;
                     loop {
-                        match self.peek_token()? {
+                        match self.current_token()? {
                             Token::RightChevronOperator => break,
                             _ => {
                                 types.push(self.parse_type()?);
                                 
-                                match self.peek_token()? {
+                                match self.current_token()? {
                                     Token::RightChevronOperator => break,
                                     Token::CommaOperator => {self.next_token(TypeContext)?;},
                                     _ => return Err(self.error(SyntaxErrorType::SemicolonExpected)),
@@ -174,7 +174,7 @@ impl Lexer {
         }
     }
 
-    fn peek_token(&mut self) -> Result<Token, Vec<SyntaxError>> {
+    fn current_token(&mut self) -> Result<Token, Vec<SyntaxError>> {
         match self.peek() {
             Ok(token) => Ok(token),
             Err(lex_error) => Err(self.lexer_error(lex_error)),
