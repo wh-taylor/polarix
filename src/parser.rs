@@ -14,6 +14,16 @@ pub enum SyntaxErrorType {
     TypeExpected,
     BlockExpected,
     SemicolonExpected,
+    IdentifierExpected,
+}
+
+macro_rules! match_or_error {
+    ( $self:ident, $pattern:pat, $error:expr ) => {
+        match $self.current_token()? {
+            $pattern => {},
+            _ => return Err($self.error($error)),
+        }
+    };
 }
 
 impl Lexer {
@@ -30,11 +40,70 @@ impl Lexer {
     //     Ok(items)
     // }
 
-    pub fn parse_block(&mut self) -> Result<Block, Vec<SyntaxError>> {
+    fn parse_item(&mut self) -> Result<Item, Vec<SyntaxError>> {
         match self.current_token()? {
-            Token::LeftCurlyBracketOperator => {},
-            _ => return Err(self.error(SyntaxErrorType::BlockExpected)),
+            Token::FnKeyword => self.parse_function(),
+            _ => todo!(),
         }
+    }
+
+    fn parse_function(&mut self) -> Result<Item, Vec<SyntaxError>> {
+        let header = self.parse_function_header()?;
+        let block  = self.parse_block()?;
+
+        Ok(Item::Function { header, body: block })
+    }
+
+    fn parse_function_header(&mut self) -> Result<FunctionHeader, Vec<SyntaxError>> {
+        match_or_error!(self, Token::FnKeyword, SyntaxErrorType::BlockExpected);
+        
+        let name = match self.next_token(NormalContext)? {
+            Token::Identifier(id) => id,
+            _ => return Err(self.error(SyntaxErrorType::IdentifierExpected)),
+        };
+        
+        self.next_token(NormalContext)?;
+        match_or_error!(self, Token::LeftParenthesisOperator, SyntaxErrorType::BlockExpected);
+        
+        let mut parameters = Vec::new();
+        let mut types: Vec<Type> = Vec::new();
+        
+        self.next_token(NormalContext)?;
+        loop {
+            match self.current_token()? {
+                Token::RightParenthesisOperator => break,
+                Token::Identifier(id) => {
+                    parameters.push(id);
+                    self.next_token(NormalContext)?;
+                    match_or_error!(self, Token::ColonOperator, SyntaxErrorType::BlockExpected);
+                    self.next_token(TypeContext)?;
+                    types.push(self.parse_type()?);
+                    
+                    if matches!(self.current_token()?, Token::CommaOperator) {
+                        self.next_token(NormalContext)?;
+                    }
+                },
+                _ => return Err(self.error(SyntaxErrorType::IdentifierExpected)),
+            }
+        }
+
+        let mut return_type = Type::Void;
+        
+        self.next_token(NormalContext)?;
+        match self.current_token()? {
+            Token::ColonOperator => {
+                self.next_token(TypeContext)?;
+                return_type = self.parse_type()?;
+                // panic!("\n{:?}\n", self.current_token()?);
+            },
+            _ => {},
+        }
+
+        Ok(FunctionHeader { name, parameters, types, return_type })
+    }
+
+    fn parse_block(&mut self) -> Result<Block, Vec<SyntaxError>> {
+        match_or_error!(self, Token::LeftCurlyBracketOperator, SyntaxErrorType::BlockExpected);
 
         let mut statements = Vec::new();
 
@@ -189,6 +258,7 @@ impl Lexer {
     }
 
     fn error(&self, error_type: SyntaxErrorType) -> Vec<SyntaxError> {
+        panic!();
         let context = self.context.clone();
         vec![SyntaxError { error_type, context }]
     }
@@ -335,6 +405,18 @@ mod tests {
         assert!(matches!(
             lexer("test.px", "Test<Foo<i32>>", TypeContext).parse_type(),
             Ok(Type::GenericType { name: s, types: t }) if s == "Test".to_string() && matches!(&t[0], Type::GenericType { name: s1, types: t1 } if *s1 == "Foo".to_string() && matches!(t1[0], Type::Int32))
+        ));
+    }
+
+    #[test]
+    fn parse_function() {
+        assert!(matches!(
+            lexer("test.px", "fn main(x: i8, y: i16): u128 {}", NormalContext).parse_function(),
+            Ok(Item::Function { header: FunctionHeader { name, parameters, types, return_type }, body: Block { statements: _, expression: _ } })
+                if name == "main".to_string()
+                && parameters[0] == "x".to_string() && parameters[1] == "y".to_string()
+                && matches!(types[0], Type::Int8) && matches!(types[1], Type::Int16)
+                && matches!(return_type, Type::UInt128)
         ));
     }
 }

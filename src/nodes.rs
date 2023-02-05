@@ -41,10 +41,10 @@ pub enum Item {
 }
 
 pub struct FunctionHeader {
-    name: String,
-    parameters: Option<Vec<String>>,
-    types: Vec<Type>,
-    return_type: Type,
+    pub name: String,
+    pub parameters: Vec<String>,
+    pub types: Vec<Type>,
+    pub return_type: Type,
 }
 
 pub struct StructField {
@@ -208,6 +208,7 @@ pub enum Statement {
 }
 
 pub enum Type {
+    Void,
     Int8,
     Int16,
     Int32,
