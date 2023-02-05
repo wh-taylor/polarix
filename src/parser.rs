@@ -57,7 +57,12 @@ impl Lexer {
     }
 
     fn parse_statement(&mut self) -> Result<Statement, Vec<SyntaxError>> {
-        todo!()
+        match self.current_token() {
+            Ok(Token::LetKeyword) => todo!(),
+            Ok(Token::ConstKeyword) => todo!(),
+            Ok(_) => Ok(Statement::ExpressionStatement { expression: self.parse_expression()? }),
+            Err(x) => Err(x),
+        }
     }
 
     fn parse_expression(&mut self) -> Result<Expression, Vec<SyntaxError>> {
@@ -66,36 +71,37 @@ impl Lexer {
 
     fn parse_atom(&mut self) -> Result<Expression, Vec<SyntaxError>> {
         match self.current_token()? {
-            Token::IntToken(int)         => Ok(Expression::IntLiteral { value: int }),
-            Token::FloatToken(float)     => Ok(Expression::FloatLiteral { value: float }),
-            Token::StringToken(string)   => Ok(Expression::StringLiteral { value: string }),
-            Token::CharToken(char)       => Ok(Expression::CharLiteral { value: char }),
-            Token::Identifier(id)        => Ok(Expression::Variable { name: id }),
-            Token::TrueKeyword           => Ok(Expression::BooleanLiteral { value: true }),
-            Token::FalseKeyword          => Ok(Expression::BooleanLiteral { value: false }),
-            _                            => Err(self.error(SyntaxErrorType::AtomExpected)),
+            Token::IntToken(int)            => Ok(Expression::IntLiteral { value: int }),
+            Token::FloatToken(float)        => Ok(Expression::FloatLiteral { value: float }),
+            Token::StringToken(string)      => Ok(Expression::StringLiteral { value: string }),
+            Token::CharToken(char)          => Ok(Expression::CharLiteral { value: char }),
+            Token::Identifier(id)           => Ok(Expression::Variable { name: id }),
+            Token::TrueKeyword              => Ok(Expression::BooleanLiteral { value: true }),
+            Token::FalseKeyword             => Ok(Expression::BooleanLiteral { value: false }),
+            Token::LeftCurlyBracketOperator => Ok(Expression::BlockExpression { body: self.parse_block()? }),
+            _                               => Err(self.error(SyntaxErrorType::AtomExpected)),
         }
     }
 
     fn parse_type_atom(&mut self) -> Result<Type, Vec<SyntaxError>> {
         match self.current_token()? {
-            Token::I8Keyword => Ok(Type::Int8),
-            Token::I16Keyword => Ok(Type::Int16),
-            Token::I32Keyword => Ok(Type::Int32),
-            Token::I64Keyword => Ok(Type::Int64),
-            Token::I128Keyword => Ok(Type::Int128),
-            Token::ISizeKeyword => Ok(Type::IntSize),
-            Token::U8Keyword => Ok(Type::UInt8),
-            Token::U16Keyword => Ok(Type::UInt16),
-            Token::U32Keyword => Ok(Type::UInt32),
-            Token::U64Keyword => Ok(Type::UInt64),
-            Token::U128Keyword => Ok(Type::UInt128),
-            Token::USizeKeyword => Ok(Type::UIntSize),
-            Token::F32Keyword => Ok(Type::Float32),
-            Token::F64Keyword => Ok(Type::Float64),
-            Token::BoolKeyword => Ok(Type::Boolean),
-            Token::CharKeyword => Ok(Type::Char),
-            Token::Identifier(id) => Ok(Type::Type { name: id }),
+            Token::I8Keyword                 => Ok(Type::Int8),
+            Token::I16Keyword                => Ok(Type::Int16),
+            Token::I32Keyword                => Ok(Type::Int32),
+            Token::I64Keyword                => Ok(Type::Int64),
+            Token::I128Keyword               => Ok(Type::Int128),
+            Token::ISizeKeyword              => Ok(Type::IntSize),
+            Token::U8Keyword                 => Ok(Type::UInt8),
+            Token::U16Keyword                => Ok(Type::UInt16),
+            Token::U32Keyword                => Ok(Type::UInt32),
+            Token::U64Keyword                => Ok(Type::UInt64),
+            Token::U128Keyword               => Ok(Type::UInt128),
+            Token::USizeKeyword              => Ok(Type::UIntSize),
+            Token::F32Keyword                => Ok(Type::Float32),
+            Token::F64Keyword                => Ok(Type::Float64),
+            Token::BoolKeyword               => Ok(Type::Boolean),
+            Token::CharKeyword               => Ok(Type::Char),
+            Token::Identifier(id)            => Ok(Type::Type { name: id }),
             Token::LeftSquareBracketOperator => {
                 self.next_token(TypeContext)?;
                 let inner_type = self.parse_type()?;
@@ -249,6 +255,14 @@ mod tests {
         assert!(matches!(
             lexer("test.px", "false", NormalContext).parse_expression(),
             Ok(Expression::BooleanLiteral { value: x }) if x == false
+        ));
+    }
+
+    #[test]
+    fn parse_atom_block() {
+        assert!(matches!(
+            lexer("test.px", "{ 1 }", NormalContext).parse_expression(),
+            Ok(Expression::BlockExpression { body: Block { statements: _, expression: Some(e) } }) if matches!(*e, Expression::IntLiteral { value: 1 })
         ));
     }
 
