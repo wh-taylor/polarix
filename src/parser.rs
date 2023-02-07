@@ -2,11 +2,13 @@ use crate::lexer::{*, ProgramContext::*};
 use crate::nodes::*;
 use crate::tokens::Token;
 
+#[derive(Debug)]
 pub struct SyntaxError {
     pub error_type: SyntaxErrorType,
     pub context: LexerContext,
 }
 
+#[derive(Debug)]
 pub enum SyntaxErrorType {
     LexerError(LexerErrorType),
     AtomExpected,
@@ -27,18 +29,18 @@ macro_rules! match_or_error {
 }
 
 impl Lexer {
-    // pub fn parse(&mut self) -> Result<Vec<Item>, SyntaxError> {
-    //     let items: Vec<Item> = Vec::new();
+    pub fn parse(&mut self) -> Result<Vec<Item>, Vec<SyntaxError>> {
+        let mut items: Vec<Item> = Vec::new();
 
-    //     loop {
-    //         match self.parse_expression() {
-    //             Ok(_x) => {},
-    //             Err(_x) => break,
-    //         }
-    //     }
+        loop {
+            match self.parse_item() {
+                Ok(item) => items.push(item),
+                Err(error) => return Err(error),
+            }
+        }
 
-    //     Ok(items)
-    // }
+        Ok(items)
+    }
 
     fn parse_item(&mut self) -> Result<Item, Vec<SyntaxError>> {
         match self.current_token()? {
@@ -417,6 +419,30 @@ mod tests {
                 && parameters[0] == "x".to_string() && parameters[1] == "y".to_string()
                 && matches!(types[0], Type::Int8) && matches!(types[1], Type::Int16)
                 && matches!(return_type, Type::UInt128)
+        ));
+    }
+
+    #[test]
+    fn parse_item() {
+        assert!(matches!(
+            lexer("test.px", "fn main(x: i8, y: i16): u128 {}", NormalContext).parse_item(),
+            Ok(Item::Function { header: FunctionHeader { name, parameters, types, return_type }, body: Block { statements: _, expression: _ } })
+                if name == "main".to_string()
+                && parameters[0] == "x".to_string() && parameters[1] == "y".to_string()
+                && matches!(types[0], Type::Int8) && matches!(types[1], Type::Int16)
+                && matches!(return_type, Type::UInt128)
+        ));
+    }
+
+    #[test]
+    fn parse() {
+        assert!(matches!(
+            lexer("test.px", "fn main(x: i8, y: i16): u128 {}", NormalContext).parse().unwrap()[0],
+            Item::Function { header: FunctionHeader { name, parameters, types, return_type }, body: Block { statements: _, expression: _ } }
+                if name == "main".to_string()
+                && parameters[0] == "x".to_string() && parameters[1] == "y".to_string()
+                && matches!(types[0], Type::Int8) && matches!(types[1], Type::Int16)
+                && matches!(return_type, Type::UInt128
         ));
     }
 }

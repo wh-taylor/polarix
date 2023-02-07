@@ -353,6 +353,7 @@ impl Token {
                 "."          => Some(DotOperator),
                 "::"         => Some(ScopeResolutionOperator),
                 "=>"         => Some(DoubleArrowOperator),
+                "?"          => Some(QuestionOperator),
                 _            => None,
             }
         }

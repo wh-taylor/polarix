@@ -9,7 +9,7 @@ pub struct Lexer {
     pub context: LexerContext,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct LexerContext {
     pub filename: String,
     pub index: usize,
@@ -23,13 +23,13 @@ pub enum ProgramContext {
     TypeContext,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct LexerError {
     pub error_type: LexerErrorType,
     pub context: LexerContext,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum LexerErrorType {
     UnclosedStringError,
     UnclosedCharError,
