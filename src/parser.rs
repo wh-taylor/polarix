@@ -33,6 +33,9 @@ impl Lexer {
         let mut items: Vec<Item> = Vec::new();
 
         loop {
+            if let Token::EOF = self.current_token()? {
+                break;
+            }
             match self.parse_item() {
                 Ok(item) => items.push(item),
                 Err(error) => return Err(error),
@@ -45,7 +48,7 @@ impl Lexer {
     fn parse_item(&mut self) -> Result<Item, Vec<SyntaxError>> {
         match self.current_token()? {
             Token::FnKeyword => self.parse_function(),
-            _ => todo!(),
+            _ => todo!("{:?}", self.current_token()),
         }
     }
 
@@ -110,21 +113,25 @@ impl Lexer {
         let mut statements = Vec::new();
 
         loop {
-            if let Token::RightCurlyBracketOperator = self.next_token(NormalContext)? { break; }
+            if let Token::RightCurlyBracketOperator = self.next_token(NormalContext)? {
+                self.next_token(NormalContext)?;
+                return Ok(Block { statements, expression: None });
+            }
             let statement = self.parse_statement()?;
             match self.next_token(NormalContext)? {
                 Token::SemicolonOperator => statements.push(statement),
-                Token::RightCurlyBracketOperator => match statement {
-                    Statement::ExpressionStatement { expression } => {
-                        return Ok(Block { statements, expression: Some(Box::new(expression)) })
-                    },
-                    _ => return Err(self.error(SyntaxErrorType::SemicolonExpected)),
+                Token::RightCurlyBracketOperator => {
+                    self.next_token(NormalContext)?;
+                    match statement {
+                        Statement::ExpressionStatement { expression } => {
+                            return Ok(Block { statements, expression: Some(Box::new(expression)) })
+                        },
+                        _ => return Err(self.error(SyntaxErrorType::SemicolonExpected)),
+                    }
                 }
                 _ => return Err(self.error(SyntaxErrorType::SemicolonExpected)),
             }
         }
-        
-        Ok(Block { statements, expression: None })
     }
 
     fn parse_statement(&mut self) -> Result<Statement, Vec<SyntaxError>> {
@@ -436,13 +443,38 @@ mod tests {
 
     #[test]
     fn parse() {
-        assert!(matches!(
-            lexer("test.px", "fn main(x: i8, y: i16): u128 {}", NormalContext).parse().unwrap()[0],
-            Item::Function { header: FunctionHeader { name, parameters, types, return_type }, body: Block { statements: _, expression: _ } }
-                if name == "main".to_string()
-                && parameters[0] == "x".to_string() && parameters[1] == "y".to_string()
-                && matches!(types[0], Type::Int8) && matches!(types[1], Type::Int16)
-                && matches!(return_type, Type::UInt128
-        ));
+        let mut lexer = lexer("test.px", "fn main(x: i8, y: i16): u128 {}", NormalContext);
+        let tree = lexer.parse().unwrap();
+
+        assert_eq!(tree.len(), 1);
+
+        match tree.get(0) {
+            Some(
+                Item::Function {
+                    header: FunctionHeader {
+                        name, parameters, types, return_type
+                    },
+                    body: Block {
+                        statements: _, expression: _ }
+                }
+            ) => {
+                assert_eq!(name, "main");
+
+                assert_eq!(parameters.len(), 2);
+                assert_eq!(parameters[0], "x");
+                assert_eq!(parameters[1], "y");
+
+                match types[..] {
+                    [Type::Int8, Type::Int16] => {},
+                    _ => panic!("Function parameter types are not accurate"),
+                }
+
+                match return_type {
+                    Type::UInt128 => {},
+                    _ => panic!("Function return type is not accurate"),
+                }
+            },
+            wrong_item => panic!("Item {:?} found", wrong_item),
+        }
     }
 }

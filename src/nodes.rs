@@ -1,3 +1,4 @@
+#[derive(Debug)]
 pub enum Item {
     Import {
         imported: String,
@@ -40,6 +41,7 @@ pub enum Item {
     },
 }
 
+#[derive(Debug)]
 pub struct FunctionHeader {
     pub name: String,
     pub parameters: Vec<String>,
@@ -47,11 +49,13 @@ pub struct FunctionHeader {
     pub return_type: Type,
 }
 
+#[derive(Debug)]
 pub struct StructField {
     name: String,
     type_: Type,
 }
 
+#[derive(Debug)]
 pub struct EnumField {
     name: String,
     types: Vec<Type>,
@@ -59,6 +63,7 @@ pub struct EnumField {
 
 // Expression nodes
 
+#[derive(Debug)]
 pub enum Expression {
     ForExpression {
         pattern: Pattern,
@@ -155,25 +160,30 @@ pub enum Expression {
     },
 }
 
+#[derive(Debug)]
 pub struct Block {
     pub statements: Vec<Statement>,
     pub expression: Option<Box<Expression>>,
 }
 
+#[derive(Debug)]
 pub struct MatchBranch {
     pattern: Pattern,
     consequent: Expression,
 }
 
+#[derive(Debug)]
 pub struct StructExpressionField {
     name: String,
     expression: Expression,
 }
 
+#[derive(Debug)]
 pub struct Pattern {
 
 }
 
+#[derive(Debug)]
 pub enum Operator {
     AddOperator,
     SubtractOperator,
@@ -183,6 +193,7 @@ pub enum Operator {
     NegateOperator,
 }
 
+#[derive(Debug)]
 pub enum PathSegment {
     PathIdentifier {
         id: String
@@ -193,6 +204,7 @@ pub enum PathSegment {
 
 // Statement nodes
 
+#[derive(Debug)]
 pub enum Statement {
     LetStatement {
         pattern: Pattern,
@@ -207,6 +219,7 @@ pub enum Statement {
     },
 }
 
+#[derive(Debug)]
 pub enum Type {
     Void,
     Int8,
@@ -244,6 +257,7 @@ pub enum Type {
     },
 }
 
+#[derive(Debug)]
 pub enum Trait {
     Trait {
         name: String,

@@ -193,7 +193,10 @@ impl Lexer {
         // Skip whitespace
         while match self.peek_char() {
             Some(ch) => ch.is_whitespace(),
-            None => { return Ok(Token::EOF); },
+            None => {
+                self.last_token = Ok(Token::EOF);
+                return Ok(Token::EOF);
+            },
         } {
             self.next_char();
         }
