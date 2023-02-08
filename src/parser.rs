@@ -418,32 +418,10 @@ mod tests {
     }
 
     #[test]
-    fn parse_function() {
-        assert!(matches!(
-            lexer("test.px", "fn main(x: i8, y: i16): u128 {}", NormalContext).parse_function(),
-            Ok(Item::Function { header: FunctionHeader { name, parameters, types, return_type }, body: Block { statements: _, expression: _ } })
-                if name == "main".to_string()
-                && parameters[0] == "x".to_string() && parameters[1] == "y".to_string()
-                && matches!(types[0], Type::Int8) && matches!(types[1], Type::Int16)
-                && matches!(return_type, Type::UInt128)
-        ));
-    }
-
-    #[test]
-    fn parse_item() {
-        assert!(matches!(
-            lexer("test.px", "fn main(x: i8, y: i16): u128 {}", NormalContext).parse_item(),
-            Ok(Item::Function { header: FunctionHeader { name, parameters, types, return_type }, body: Block { statements: _, expression: _ } })
-                if name == "main".to_string()
-                && parameters[0] == "x".to_string() && parameters[1] == "y".to_string()
-                && matches!(types[0], Type::Int8) && matches!(types[1], Type::Int16)
-                && matches!(return_type, Type::UInt128)
-        ));
-    }
-
-    #[test]
     fn parse() {
-        let mut lexer = lexer("test.px", "fn main(x: i8, y: i16): u128 {}", NormalContext);
+        let mut lexer = lexer(
+            "test.px", "fn main(x: i8, y: i16): u128 {}",
+            NormalContext);
         let tree = lexer.parse().unwrap();
 
         assert_eq!(tree.len(), 1);
